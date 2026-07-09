@@ -9,12 +9,15 @@ build/
 *.swo
 *~
 __pycache__/
+.metadata
+.flutter-plugins
+.flutter-plugins-dependencies
 
 # iOS & Android
 ios/Pods/
 ios/.symlinks/
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
+ios/Flutter/
+ios/Runner/GeneratedPluginRegistrant.*
 android/.gradle/
 android/app/build/
 android/local.properties

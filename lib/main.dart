@@ -37,12 +37,12 @@ class RichyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: RichyTheme.lightTheme,
 
-      // EasyLocalization delegates
-      localizationsDelegates: const [
+      // EasyLocalization delegates (non-const: includes runtime delegates)
+      localizationsDelegates: [
         ...context.localizationDelegates,
-        GlobalMaterialLocalization.delegate,
-        GlobalWidgetsLocalization.delegate,
-        GlobalCupertinoLocalization.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: context.supportedLocales,
       locale: context.locale,

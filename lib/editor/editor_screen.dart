@@ -73,7 +73,7 @@ class RichyEditorScreen extends StatelessWidget {
           ),
           TuneAdjustmentItem(
             id: 'saturation',
-            icon: Icons.saturation,
+            icon: Icons.colorize,
             label: 'Saturation',
             min: -0.5,
             max: 0.5,
@@ -108,7 +108,7 @@ class RichyEditorScreen extends StatelessWidget {
             Navigator.of(context).popUntil((route) => route.isFirst);
           }
         },
-        onCloseButtonPressed: () {
+        onCloseEditor: (_) {
           ErrorLogger.log('Editor closed by user');
           Navigator.of(context).pop();
         },

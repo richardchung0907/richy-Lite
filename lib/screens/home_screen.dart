@@ -129,10 +129,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.camera_alt_rounded,
                       size: 72,
-                      color: const Color(0xFFFFB3C6),
+                      color: Color(0xFFFFB3C6),
                     ),
                     const SizedBox(height: 16),
                     Text(
