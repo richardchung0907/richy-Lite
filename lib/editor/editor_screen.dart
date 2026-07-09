@@ -101,15 +101,17 @@ class RichyEditorScreen extends StatelessWidget {
       configs: _buildConfigs(context),
       callbacks: ProImageEditorCallbacks(
         onImageEditingComplete: (bytes) async {
+          // Pop immediately so the "Changes are being applied" loading
+          // dialog closes — the user returns to home instantly.
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          // Share in background (no await needed on the editor context)
           try {
             await ErrorLogger.log('Editor completed — sharing ${bytes.length} bytes');
             await ShareService.shareImageBytes(bytes);
           } catch (e, stack) {
             await ErrorLogger.log('Share failed', error: e, stackTrace: stack);
-          }
-          // Pop back to home — use a simple pop since editor is a pushed route
-          if (context.mounted) {
-            Navigator.of(context).pop();
           }
         },
         onCloseEditor: (_) {
