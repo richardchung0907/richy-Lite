@@ -106,6 +106,44 @@ def save_state(state: dict):
         pass
 
 
+# ── Cleanup ─────────────────────────────────────────────────────────
+
+
+def cleanup_leftovers():
+    """Remove leftover temp files from previous failed runs.
+
+    Call at startup so a failed run doesn't pollute TEMP or leave
+    half-installed SDKs that block re-installation.
+    """
+    log("── Cleaning up leftover temp files ──")
+    cleaned = 0
+
+    # Temp zip archives
+    for fname in ["flutter_stable.zip", "jdk17_windows.zip", "android_cmdline.zip"]:
+        path = os.path.join(tempfile.gettempdir(), fname)
+        if os.path.isfile(path):
+            try:
+                os.remove(path)
+                log(f"  Removed leftover: {path}")
+                cleaned += 1
+            except OSError:
+                pass
+
+    # Temp extraction dir
+    extract_dir = os.path.join(tempfile.gettempdir(), "android_cmdline_extract")
+    if os.path.isdir(extract_dir):
+        try:
+            shutil.rmtree(extract_dir, ignore_errors=True)
+            log(f"  Removed leftover: {extract_dir}")
+            cleaned += 1
+        except OSError:
+            pass
+
+    if cleaned == 0:
+        log("  ✓ Nothing to clean up")
+    return cleaned
+
+
 # ── Subprocess Helpers ─────────────────────────────────────────────
 
 
@@ -115,16 +153,25 @@ def run_cmd(
     timeout: int = 300,
     capture: bool = True,
 ) -> subprocess.CompletedProcess:
-    """Run a command, return CompletedProcess."""
+    """Run a command, return CompletedProcess.
+
+    Uses UTF-8 encoding to handle Flutter's Unicode output on Windows.
+    """
     log(f"  RUN: {' '.join(cmd)}")
+    env = os.environ.copy()
+    # Force UTF-8 for subprocess I/O on Windows
+    env.setdefault("PYTHONIOENCODING", "utf-8")
     try:
         return subprocess.run(
             cmd,
             cwd=cwd or PROJECT_DIR,
             capture_output=capture,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
             shell=(platform.system() == "Windows") and capture,
+            env=env,
         )
     except subprocess.TimeoutExpired:
         log(f"  ✗ Timeout after {timeout}s")
@@ -300,9 +347,27 @@ def install_flutter(force: bool = False) -> bool:
 
     flutter_exe = os.path.join(FLUTTER_ROOT_DEFAULT, "bin", "flutter.bat")
     if os.path.isfile(flutter_exe) and not force:
-        log(f"  ✓ Flutter already installed at {FLUTTER_ROOT_DEFAULT}")
+        log(f"  ✓ Flutter already present at {FLUTTER_ROOT_DEFAULT}")
         add_to_path(os.path.join(FLUTTER_ROOT_DEFAULT, "bin"))
-        return True
+        refresh_env()
+        # Quick verification to confirm it's not a broken install
+        flutter = find_exe("flutter")
+        if flutter:
+            result = run_cmd([flutter, "--version"], timeout=120, capture=True)
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    if "Flutter" in line and ("channel" in line or chr(8226) in line or "•" in line or "-" in line):
+                        log(f"  ✓ {line.strip()}")
+                        break
+                state = load_state()
+                state["flutter_installed"] = True
+                state["flutter_root"] = FLUTTER_ROOT_DEFAULT
+                save_state(state)
+                return True
+            else:
+                log("  ⚠ Existing Flutter failed verification. Re-installing…")
+        else:
+            log("  ⚠ Flutter binary not found on PATH. Re-installing…")
 
     url = get_flutter_url()
     zip_path = os.path.join(tempfile.gettempdir(), "flutter_stable.zip")
@@ -330,7 +395,7 @@ def install_flutter(force: bool = False) -> bool:
         # Verify
         flutter = find_exe("flutter")
         if flutter:
-            result = run_cmd([flutter, "--version"], timeout=60)
+            result = run_cmd([flutter, "--version"], timeout=120)
             if result.returncode == 0:
                 for line in result.stdout.splitlines():
                     if "Flutter" in line and ("channel" in line or "•" in line):
@@ -341,7 +406,15 @@ def install_flutter(force: bool = False) -> bool:
                 state["flutter_root"] = FLUTTER_ROOT_DEFAULT
                 save_state(state)
                 return True
+            else:
+                log(f"  ✗ flutter --version returned code {result.returncode}")
         log("  ✗ Flutter installation verification failed.")
+        log(f"    Removing broken install at {FLUTTER_ROOT_DEFAULT} …")
+        try:
+            shutil.rmtree(FLUTTER_ROOT_DEFAULT, ignore_errors=True)
+            log("    ✓ Removed.")
+        except OSError:
+            log("    ⚠ Could not remove. Please delete manually.")
         return False
     except Exception as e:
         log_error("Flutter installation failed", e)
@@ -668,6 +741,9 @@ def main():
     log(f"  Log:      {SETUP_LOG_FILE}")
     log("=" * 60)
 
+    # ── Phase 0: Cleanup leftovers from previous failed runs ────
+    cleanup_leftovers()
+
     # ── Phase 0: Platform Check ────────────────────────────────
     log("\n▶ Phase 0: Platform Check")
     if not check_windows():
@@ -770,14 +846,14 @@ def main():
             log("    Start an emulator: flutter emulators --launch <id>")
             sys.exit(1)
 
-        cmd = [sys.executable, build_script, "--hot-reload"]
+        cmd = [sys.executable, build_script, "--clean", "--hot-reload"]
         if devices:
             cmd.extend(["--device", devices[0]])
         log(f"  Launching Hot Reload…")
         subprocess.run(cmd, cwd=PROJECT_DIR)
     else:
         # Build APK
-        cmd = [sys.executable, build_script]
+        cmd = [sys.executable, build_script, "--clean"]
         if args.fresh:
             cmd.append("--release")
         result = subprocess.run(cmd, cwd=PROJECT_DIR)

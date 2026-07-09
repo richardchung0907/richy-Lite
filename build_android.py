@@ -15,6 +15,7 @@ Usage:
     python build_android.py --release        # Build release APK
     python build_android.py --hot-reload     # Launch `flutter run` with Hot Reload
     python build_android.py --install        # Build + auto-install on device
+    python build_android.py --clean          # Clean stale build artifacts first
 """
 
 import argparse
@@ -66,6 +67,40 @@ def log_error(msg: str, exc: Optional[Exception] = None):
             log(f"    {line}")
 
 
+def cleanup_build_artifacts():
+    """Remove stale build artifacts from previous failed builds.
+
+    Runs `flutter clean` if Flutter is available, otherwise manually
+    removes the build/ directory.
+    """
+    log("── Cleaning build artifacts ──")
+    flutter = find_executable("flutter")
+    if flutter:
+        result = subprocess.run(
+            [flutter, "clean"],
+            cwd=PROJECT_DIR,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+            shell=(platform.system() == "Windows"),
+        )
+        if result.returncode == 0:
+            log("  ✓ flutter clean completed")
+            return
+        else:
+            log(f"  ⚠ flutter clean had issues: {result.stderr[-300:]}")
+    # Fallback: manual removal
+    build_dir = os.path.join(PROJECT_DIR, "build")
+    if os.path.isdir(build_dir):
+        try:
+            shutil.rmtree(build_dir, ignore_errors=True)
+            log("  ✓ Removed build/ directory")
+        except OSError:
+            log("  ⚠ Could not remove build/ directory")
+
+
 def run(
     cmd: list[str],
     cwd: str | None = None,
@@ -78,16 +113,22 @@ def run(
     When `capture=True`, stdout/stderr are captured (good for check
     commands).  When `capture=False`, output streams live (good for
     Hot Reload / flutter run).
+    Uses UTF-8 encoding to handle Flutter's Unicode output on Windows.
     """
     log(f"  RUN: {' '.join(cmd)}")
+    env = os.environ.copy()
+    env.setdefault("PYTHONIOENCODING", "utf-8")
     try:
         result = subprocess.run(
             cmd,
             cwd=cwd or PROJECT_DIR,
             capture_output=capture,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
             shell=(platform.system() == "Windows") and capture,
+            env=env,
         )
         if not allow_fail and result.returncode != 0:
             stderr_tail = (result.stderr or "")[-1500:]
@@ -493,6 +534,10 @@ def main():
         "--device", type=str, default=None,
         help="Target specific device ID (for --hot-reload or --install)",
     )
+    parser.add_argument(
+        "--clean", action="store_true",
+        help="Clean build artifacts (flutter clean) before building",
+    )
     args = parser.parse_args()
 
     ensure_log_dir()
@@ -509,6 +554,9 @@ def main():
     if not check_project_structure():
         log("\n✗ Not a valid Flutter project. Run setup_and_build.py first.")
         sys.exit(1)
+
+    if args.clean:
+        cleanup_build_artifacts()
 
     # ── Phase 1: Environment ──────────────────────────────────
     log("\n▶ Phase 1: Environment Check")
