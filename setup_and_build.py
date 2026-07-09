@@ -688,6 +688,26 @@ def run_flutter_doctor() -> bool:
 # ── Flutter Project Bootstrap ─────────────────────────────────────
 
 
+def _ensure_android_resources():
+    """Create missing Android resource files that Flutter plugins require.
+
+    Some plugins (e.g., share_plus, image_picker) need res/xml/file_paths.xml
+    for FileProvider. If it's missing, AAPT linking fails.
+    """
+    res_xml = os.path.join(PROJECT_DIR, "android", "app", "src", "main", "res", "xml")
+    file_paths_xml = os.path.join(res_xml, "file_paths.xml")
+    if not os.path.isfile(file_paths_xml):
+        os.makedirs(res_xml, exist_ok=True)
+        with open(file_paths_xml, "w") as f:
+            f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+            f.write('<paths>\n')
+            f.write('    <cache-path name="cache" path="." />\n')
+            f.write('    <external-cache-path name="external_cache" path="." />\n')
+            f.write('    <root-path name="root" path="." />\n')
+            f.write('</paths>\n')
+        log("  ✓ Created missing android/app/src/main/res/xml/file_paths.xml")
+
+
 def ensure_flutter_project() -> bool:
     """Create the Flutter project if it doesn't exist yet."""
     log("── Ensuring Flutter Project ──")
@@ -695,6 +715,8 @@ def ensure_flutter_project() -> bool:
     main_dart = os.path.join(PROJECT_DIR, "lib", "main.dart")
     if os.path.isfile(main_dart):
         log("  ✓ Flutter project already exists (lib/main.dart found)")
+        # Ensure required Android resources exist (may be missing in manual setup)
+        _ensure_android_resources()
         return True
 
     log("  Creating Flutter project…")

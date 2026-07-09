@@ -70,10 +70,23 @@ def log_error(msg: str, exc: Optional[Exception] = None):
 def cleanup_build_artifacts():
     """Remove stale build artifacts from previous failed builds.
 
-    Runs `flutter clean` if Flutter is available, otherwise manually
-    removes the build/ directory.
+    Clears Gradle daemon cache (fixes %USERPROFILE% literal path bug),
+    runs `flutter clean`, and removes the build/ directory.
     """
     log("── Cleaning build artifacts ──")
+
+    # Kill stale Gradle daemons and clear corrupted cache
+    # Fixes: "java.io.tmpdir is set to a directory that doesn't exist"
+    gradle_daemon_dir = os.path.expandvars(r"%USERPROFILE%\.gradle\daemon")
+    gradle_caches_dir = os.path.expandvars(r"%USERPROFILE%\.gradle\caches")
+    for d in [gradle_daemon_dir, gradle_caches_dir]:
+        if os.path.isdir(d):
+            try:
+                shutil.rmtree(d, ignore_errors=True)
+                log(f"  ✓ Cleared {d}")
+            except OSError:
+                pass
+
     flutter = find_executable("flutter")
     if flutter:
         result = subprocess.run(
