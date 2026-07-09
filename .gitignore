@@ -1,0 +1,39 @@
+# Flutter
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# iOS & Android
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+android/.gradle/
+android/app/build/
+android/local.properties
+android/key.properties
+
+# macOS
+macos/Pods/
+macos/.symlinks/
+
+# Windows
+windows/flutter/ephemeral/
+
+# Linux
+linux/flutter/ephemeral/
+
+# Web
+web/.dart_tool/
+
+# Misc
+*.lock
+*.log
+.env
+error_logs/

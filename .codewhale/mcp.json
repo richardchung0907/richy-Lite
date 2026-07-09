@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "headroom": {
+      "command": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\headroom.EXE",
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,40 @@
+name: berry_lite
+description: BERRY Lite - A beautiful lifestyle/beauty photo filter app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+  flutter: '>=3.38.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Core Image Editor (v13.2.0 — streamlined to filter+tune only)
+  pro_image_editor: ^13.2.0
+
+  # Media Input — native camera & gallery
+  image_picker: ^1.2.0
+
+  # One-click native social share (Instagram, Facebook, X, WhatsApp, etc.)
+  share_plus: ^13.0.0
+
+  # i18n — all UI strings wrapped for future multi-language scaling
+  easy_localization: ^3.0.0
+
+  # File system paths
+  path_provider: ^2.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/translations/

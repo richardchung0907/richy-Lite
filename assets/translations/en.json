@@ -1,0 +1,35 @@
+{
+  "home": {
+    "title": "BERRY",
+    "subtitle": "Lite",
+    "take_photo": "Take Photo",
+    "open_gallery": "Open Gallery",
+    "empty_state": "Tap a button below to start\nediting your beautiful photo ✨"
+  },
+  "editor": {
+    "done": "Done",
+    "save": "Save & Share",
+    "reset": "Reset to Default",
+    "back": "Back",
+    "cancel": "Cancel"
+  },
+  "filters": {
+    "peach": "Peach 🍑",
+    "mute_peach": "Mute Peach 🌸",
+    "milk_plus": "Milk+ 🥛",
+    "butter": "Butter 🧈",
+    "cool": "Cool ❄️"
+  },
+  "share": {
+    "title": "BERRY Lite",
+    "preparing": "Preparing your photo...",
+    "success": "Photo shared successfully!",
+    "error": "Could not share photo. Please try again."
+  },
+  "errors": {
+    "no_image": "No image selected",
+    "editor_failed": "Could not open editor",
+    "camera_unavailable": "Camera is not available",
+    "gallery_unavailable": "Gallery is not available"
+  }
+}
