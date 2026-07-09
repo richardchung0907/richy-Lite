@@ -152,10 +152,12 @@ def run_cmd(
     cwd: str | None = None,
     timeout: int = 300,
     capture: bool = True,
-) -> subprocess.CompletedProcess:
-    """Run a command, return CompletedProcess.
+    allow_timeout: bool = False,
+) -> subprocess.CompletedProcess | None:
+    """Run a command, return CompletedProcess (or None if timeout and allowed).
 
     Uses UTF-8 encoding to handle Flutter's Unicode output on Windows.
+    When `allow_timeout=True`, returns None instead of raising on timeout.
     """
     log(f"  RUN: {' '.join(cmd)}")
     env = os.environ.copy()
@@ -174,6 +176,9 @@ def run_cmd(
             env=env,
         )
     except subprocess.TimeoutExpired:
+        if allow_timeout:
+            log(f"  ⚠ Timeout after {timeout}s (non-fatal)")
+            return None
         log(f"  ✗ Timeout after {timeout}s")
         raise
     except Exception as e:
@@ -196,6 +201,17 @@ def find_exe(name: str) -> str | None:
         ]:
             if os.path.isfile(p):
                 return p
+        # ADB fallback: check ANDROID_HOME\platform-tools
+        if name in ("adb", "adb.exe"):
+            android_home = os.environ.get("ANDROID_HOME", "") or os.environ.get("ANDROID_SDK_ROOT", "")
+            if android_home:
+                adb_path = os.path.join(android_home, "platform-tools", "adb.exe")
+                if os.path.isfile(adb_path):
+                    return adb_path
+            # Also check default location
+            default_adb = os.path.expandvars(r"%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe")
+            if os.path.isfile(default_adb):
+                return default_adb
     return None
 
 
@@ -864,14 +880,19 @@ def main():
     # ── Phase 5: Build / Hot Reload ────────────────────────────
     log("\n▶ Phase 5: Build & Test")
 
-    # Check for devices
+    # Check for devices (robust: start ADB server first, non-fatal on timeout)
     adb = find_exe("adb")
     devices = []
     if adb:
-        result = run_cmd([adb, "devices"], timeout=30)
-        for line in result.stdout.splitlines()[1:]:
-            if line.strip() and "\tdevice" in line:
-                devices.append(line.split("\t")[0])
+        # Ensure ADB daemon is running before querying devices
+        run_cmd([adb, "start-server"], timeout=30, allow_timeout=True)
+        result = run_cmd([adb, "devices"], timeout=60, allow_timeout=True)
+        if result and result.returncode == 0:
+            for line in result.stdout.splitlines()[1:]:
+                if line.strip() and "\tdevice" in line:
+                    devices.append(line.split("\t")[0])
+        elif result is None:
+            log("  ⚠ adb devices timed out — continuing without device detection")
 
     print_summary(devices)
 

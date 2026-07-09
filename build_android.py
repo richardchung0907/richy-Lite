@@ -309,7 +309,11 @@ def check_java() -> bool:
 
 
 def check_devices() -> list[str]:
-    """Check for connected Android devices / emulators."""
+    """Check for connected Android devices / emulators.
+
+    Starts ADB server first and handles timeouts gracefully
+    (no-device is a valid state — don't crash on slow ADB).
+    """
     log("── Checking Android Devices ──")
 
     adb = None
@@ -324,21 +328,36 @@ def check_devices() -> list[str]:
     if not adb:
         adb = find_executable("adb")
 
-    if adb:
-        result = run([adb, "devices"], timeout=30)
-        devices = []
-        for line in result.stdout.splitlines()[1:]:
-            if line.strip() and "\tdevice" in line:
-                device_id = line.split("\t")[0]
-                devices.append(device_id)
-                log(f"  ✓ Device: {device_id}")
-        if not devices:
-            log("  ℹ No devices/emulators detected. Build will still succeed.")
-            log("    Start an emulator or connect a phone for Hot Reload / install.")
-        return devices
-    else:
+    if not adb:
         log("  ℹ ADB not found — skipping device check.")
         return []
+
+    # Start ADB daemon (non-fatal if it fails)
+    try:
+        run([adb, "start-server"], timeout=30, allow_fail=True)
+    except Exception:
+        pass
+
+    # Query devices (non-fatal on timeout)
+    try:
+        result = run([adb, "devices"], timeout=60, allow_fail=True)
+    except subprocess.TimeoutExpired:
+        log("  ⚠ adb devices timed out — continuing without device check")
+        return []
+    except Exception:
+        log("  ⚠ adb devices failed — continuing without device check")
+        return []
+
+    devices = []
+    for line in result.stdout.splitlines()[1:]:
+        if line.strip() and "\tdevice" in line:
+            device_id = line.split("\t")[0]
+            devices.append(device_id)
+            log(f"  ✓ Device: {device_id}")
+    if not devices:
+        log("  ℹ No devices/emulators detected. Build will still succeed.")
+        log("    Start an emulator or connect a phone for Hot Reload / install.")
+    return devices
 
 
 def check_project_structure() -> bool:
