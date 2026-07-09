@@ -299,8 +299,8 @@ def check_windows() -> bool:
 # ── Download Helper ────────────────────────────────────────────────
 
 
-def download_file(url: str, dest: str, desc: str = "") -> bool:
-    """Download a file with progress indicator."""
+def download_file(url: str, dest: str, desc: str = "", sha256: str = "") -> bool:
+    """Download a file with progress indicator and optional SHA256 verification."""
     log(f"  Downloading {desc or url} …")
     try:
         os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -309,12 +309,14 @@ def download_file(url: str, dest: str, desc: str = "") -> bool:
             total = int(response.headers.get("Content-Length", 0))
             downloaded = 0
             block_size = 8192
+            hasher = hashlib.sha256()
             with open(dest, "wb") as f:
                 while True:
                     chunk = response.read(block_size)
                     if not chunk:
                         break
                     f.write(chunk)
+                    hasher.update(chunk)
                     downloaded += len(chunk)
                     if total > 0 and downloaded % (block_size * 128) == 0:
                         pct = downloaded * 100 // total
@@ -323,17 +325,36 @@ def download_file(url: str, dest: str, desc: str = "") -> bool:
             if total > 0:
                 sys.stdout.write("\r    100%  \n")
                 sys.stdout.flush()
+
+        # SHA256 verification
+        if sha256:
+            actual_hash = hasher.hexdigest()
+            if actual_hash.lower() != sha256.lower():
+                log(f"  ✗ SHA256 mismatch!")
+                log(f"    Expected: {sha256}")
+                log(f"    Got:      {actual_hash}")
+                os.remove(dest)
+                return False
+            log(f"  ✓ SHA256 verified")
+
         log(f"  ✓ Downloaded to {dest}")
         return True
     except Exception as e:
         log_error(f"Download failed: {url}", e)
+        # Clean up partial download
+        try:
+            if os.path.isfile(dest):
+                os.remove(dest)
+        except OSError:
+            pass
         return False
 
 
 # ── Flutter Installation ───────────────────────────────────────────
 
 
-FLUTTER_STABLE_URL = "https://storage.googleapis.com/flutter_infra_release/releases/stable/windows/flutter_windows_3.38.1-stable.zip"
+FLUTTER_STABLE_URL = "https://storage.googleapis.com/flutter_infra_release/releases/stable/windows/flutter_windows_3.44.5-stable.zip"
+FLUTTER_STABLE_SHA256 = "64ff1f561e0811bc724d597f9fe6faa6b3e74b11c02c320076fbbe239a717a11"
 
 
 def get_flutter_url() -> str:
@@ -373,7 +394,7 @@ def install_flutter(force: bool = False) -> bool:
     zip_path = os.path.join(tempfile.gettempdir(), "flutter_stable.zip")
 
     if not os.path.isfile(zip_path) or force:
-        if not download_file(url, zip_path, "Flutter SDK"):
+        if not download_file(url, zip_path, "Flutter SDK", sha256=FLUTTER_STABLE_SHA256):
             return False
 
     log("  Extracting Flutter SDK …")
@@ -555,11 +576,27 @@ def install_android_sdk(force: bool = False) -> bool:
         os.environ["ANDROID_HOME"] = ANDROID_SDK_DEFAULT
         refresh_env()
 
-        # Accept licenses
+        # Accept licenses (non-interactive: pipe 'y' answers via stdin)
         log("  Accepting Android SDK licenses …")
         sdkmanager = os.path.join(tools_dir, "bin", "sdkmanager.bat")
         if os.path.isfile(sdkmanager):
-            run_cmd([sdkmanager, "--licenses"], timeout=60)
+            log("  RUN: (echo y | sdkmanager --licenses)")
+            try:
+                subprocess.run(
+                    f'echo y | "{sdkmanager}" --licenses',
+                    cwd=PROJECT_DIR,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=120,
+                    shell=True,
+                )
+                log("  ✓ Licenses accepted")
+            except subprocess.TimeoutExpired:
+                log("  ⚠ License acceptance timed out (may already be accepted)")
+            except Exception as e:
+                log_error("License acceptance failed", e)
 
             # Install essential packages
             log("  Installing SDK packages (platform-tools, build-tools, platform) …")

@@ -39,3 +39,4 @@ web/.dart_tool/
 .env
 error_logs/
 build_logs/
+%USERPROFILE%/

@@ -356,7 +356,7 @@ def check_project_structure() -> bool:
 # ── Build & Hot Reload Functions ──────────────────────────────────
 
 def flutter_pub_get() -> bool:
-    """Run flutter pub get."""
+    """Run flutter pub get. Cleans stale lock/dart_tool on failure."""
     log("── Running flutter pub get ──")
     flutter = find_executable("flutter")
     try:
@@ -367,10 +367,29 @@ def flutter_pub_get() -> bool:
         else:
             log_error("flutter pub get failed")
             log(f"  {result.stderr[-1000:]}")
+            # Clean up possibly corrupted state so next run is fresh
+            _clean_pub_state()
             return False
     except Exception as e:
         log_error("flutter pub get exception", e)
+        _clean_pub_state()
         return False
+
+
+def _clean_pub_state():
+    """Remove pubspec.lock and .dart_tool/ so the next pub get
+    starts from a clean slate (prevents corruption from failed runs)."""
+    for path in ["pubspec.lock", ".dart_tool"]:
+        full = os.path.join(PROJECT_DIR, path)
+        try:
+            if os.path.isfile(full):
+                os.remove(full)
+                log(f"  ✓ Removed {path}")
+            elif os.path.isdir(full):
+                shutil.rmtree(full, ignore_errors=True)
+                log(f"  ✓ Removed {path}/")
+        except OSError:
+            pass
 
 
 def flutter_analyze() -> bool:
