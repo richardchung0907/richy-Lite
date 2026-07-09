@@ -1,6 +1,6 @@
 import 'package:pro_image_editor/pro_image_editor.dart';
 
-/// Five premium custom color filter presets for BERRY Lite.
+/// Five premium custom color filter presets for RICHY Lite.
 ///
 /// Each filter uses a 4×5 color matrix that maps normalized
 /// [R, G, B, A, 1] input to [R', G', B', A'] output via:
@@ -11,8 +11,8 @@ import 'package:pro_image_editor/pro_image_editor.dart';
 ///   A' = m[3][0]*R + m[3][1]*G + m[3][2]*B + m[3][3]*A + m[3][4]
 ///
 /// All values are in [0, 1] normalized space.
-class BerryFilters {
-  BerryFilters._();
+class RichyFilters {
+  RichyFilters._();
 
   /// Returns the complete list of 5 custom filter presets.
   static List<FilterModel> get all => [

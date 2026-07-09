@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-BERRY Lite — Android Build, Hot Reload & Test Script
+RICHY Lite — Android Build, Hot Reload & Test Script
 ======================================================
-This script automates the Android pipeline for BERRY Lite:
+This script automates the Android pipeline for RICHY Lite:
   1. Checks local environment (Flutter, Android SDK, Java)
   2. Detects connected devices / running emulators
   3. Runs `flutter pub get` and `flutter analyze`
@@ -471,7 +471,7 @@ def hot_reload(device_id: str | None = None) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="BERRY Lite — Android Build, Hot Reload & Test Script"
+        description="RICHY Lite — Android Build, Hot Reload & Test Script"
     )
     parser.add_argument(
         "--analyze", action="store_true",
@@ -498,7 +498,7 @@ def main():
     ensure_log_dir()
 
     log("=" * 60)
-    log("  BERRY Lite — Android Build & Test Script")
+    log("  RICHY Lite — Android Build & Test Script")
     log(f"  Platform: {platform.system()} {platform.release()}")
     log(f"  Project:  {PROJECT_DIR}")
     log(f"  Log:      {BUILD_LOG_FILE}")

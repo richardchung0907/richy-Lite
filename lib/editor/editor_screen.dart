@@ -7,13 +7,13 @@ import 'custom_filters.dart';
 import '../services/share_service.dart';
 import '../utils/error_logger.dart';
 
-/// Wraps [ProImageEditor] with BERRY Lite's streamlined configuration:
+/// Wraps [ProImageEditor] with RICHY Lite's streamlined configuration:
 /// - Only Filter + Tune (Brightness/Contrast/Saturation) tools enabled
 /// - 5 custom premium color filter presets
 /// - Reset button to clear all adjustments
 /// - On "Done": captures output bytes and triggers native share sheet
-class BerryEditorScreen extends StatelessWidget {
-  const BerryEditorScreen({
+class RichyEditorScreen extends StatelessWidget {
+  const RichyEditorScreen({
     super.key,
     required this.imageFile,
   });
@@ -42,7 +42,7 @@ class BerryEditorScreen extends StatelessWidget {
 
       // ── Filter Editor: 5 custom presets ───────────────────────
       filterEditor: FilterEditorConfigs(
-        filterList: BerryFilters.all,
+        filterList: RichyFilters.all,
         // enableMultiSelection: false means each new filter replaces
         // the previous one (consumer-friendly single-filter mode)
         enableMultiSelection: false,

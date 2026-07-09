@@ -14,7 +14,7 @@ class ErrorLogger {
   ErrorLogger._();
 
   static const String _logDirName = 'error_logs';
-  static const String _logFileName = 'berry_errors.log';
+  static const String _logFileName = 'richy_errors.log';
 
   static File? _logFile;
 

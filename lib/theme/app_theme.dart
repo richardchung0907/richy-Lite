@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// BERRY Lite app theme — pastel light-pink minimalist aesthetic.
-class BerryTheme {
-  BerryTheme._();
+/// RICHY Lite app theme — pastel light-pink minimalist aesthetic.
+class RichyTheme {
+  RichyTheme._();
 
   // ── Color Palette ──────────────────────────────────────────────
   static const Color pink50 = Color(0xFFFFF0F3);

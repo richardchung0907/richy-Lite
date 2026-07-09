@@ -7,9 +7,9 @@ import 'package:image_picker/image_picker.dart';
 import '../editor/editor_screen.dart';
 import '../utils/error_logger.dart';
 
-/// Home screen — the entry point for BERRY Lite.
+/// Home screen — the entry point for RICHY Lite.
 ///
-/// Shows a clean minimalist header "BERRY", a large center illustration
+/// Shows a clean minimalist header "RICHY", a large center illustration
 /// placeholder, and two primary CTA buttons: Take Photo & Open Gallery.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateToEditor(File imageFile) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => BerryEditorScreen(imageFile: imageFile),
+        builder: (_) => RichyEditorScreen(imageFile: imageFile),
       ),
     );
   }

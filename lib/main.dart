@@ -14,7 +14,7 @@ Future<void> main() async {
 
   // Initialize error logger for test phase
   await ErrorLogger.init();
-  await ErrorLogger.log('App starting — BERRY Lite v1.0.0');
+  await ErrorLogger.log('App starting — RICHY Lite v1.0.0');
 
   runApp(
     EasyLocalization(
@@ -22,20 +22,20 @@ Future<void> main() async {
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
       startLocale: const Locale('en'),
-      child: const BerryApp(),
+      child: const RichyApp(),
     ),
   );
 }
 
-class BerryApp extends StatelessWidget {
-  const BerryApp({super.key});
+class RichyApp extends StatelessWidget {
+  const RichyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BERRY Lite',
+      title: 'RICHY Lite',
       debugShowCheckedModeBanner: false,
-      theme: BerryTheme.lightTheme,
+      theme: RichyTheme.lightTheme,
 
       // EasyLocalization delegates
       localizationsDelegates: const [

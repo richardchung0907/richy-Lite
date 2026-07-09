@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-BERRY Lite — One-Click Environment Setup, Build & Test
+RICHY Lite — One-Click Environment Setup, Build & Test
 ========================================================
 Master script that automates the ENTIRE pipeline from a clean
 Windows 10 machine:
@@ -257,7 +257,7 @@ def download_file(url: str, dest: str, desc: str = "") -> bool:
     log(f"  Downloading {desc or url} …")
     try:
         os.makedirs(os.path.dirname(dest), exist_ok=True)
-        req = urllib.request.Request(url, headers={"User-Agent": "BERRY-Lite-Setup/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "RICHY-Lite-Setup/1.0"})
         with urllib.request.urlopen(req, timeout=600) as response:
             total = int(response.headers.get("Content-Length", 0))
             downloaded = 0
@@ -579,8 +579,8 @@ def ensure_flutter_project() -> bool:
 
     result = run_cmd([
         flutter, "create",
-        "--project-name", "berry_lite",
-        "--org", "com.berrylite",
+        "--project-name", "richy_lite",
+        "--org", "com.richylite",
         "--platforms", "android,ios",
         ".",
     ], timeout=120)
@@ -616,7 +616,7 @@ def show_menu() -> str:
     """Display interactive menu for subsequent runs. Returns choice."""
     print()
     print("  ┌──────────────────────────────────────────┐")
-    print("  │  BERRY Lite — Already Configured!        │")
+    print("  │  RICHY Lite — Already Configured!        │")
     print("  │                                          │")
     print("  │  [1] Rebuild APK + Install & Run         │")
     print("  │  [2] Hot Reload (development session)    │")
@@ -639,7 +639,7 @@ def show_menu() -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="BERRY Lite — One-Click Setup, Build & Test"
+        description="RICHY Lite — One-Click Setup, Build & Test"
     )
     parser.add_argument(
         "--fresh", action="store_true",
@@ -662,7 +662,7 @@ def main():
     ensure_log_dir()
 
     log("=" * 60)
-    log("  BERRY Lite — One-Click Setup & Build")
+    log("  RICHY Lite — One-Click Setup & Build")
     log(f"  Platform: {platform.system()} {platform.release()}")
     log(f"  Project:  {PROJECT_DIR}")
     log(f"  Log:      {SETUP_LOG_FILE}")

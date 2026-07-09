@@ -1,4 +1,4 @@
-# BERRY Lite — iOS Build Guide
+# RICHY Lite — iOS Build Guide
 
 ## ⚠️ Important: iOS builds require macOS
 

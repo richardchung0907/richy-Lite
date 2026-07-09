@@ -1,4 +1,4 @@
-# BERRY Lite — Android Build Guide
+# RICHY Lite — Android Build Guide
 
 ## 🚀 One-Click Setup (Recommended)
 
@@ -82,7 +82,7 @@ Build and setup logs are stored in `build_logs/` (**separate** from app runtime 
 | Build logs | `build_logs/build_android_YYYYMMDD_HHMMSS.log` |
 | Setup logs | `build_logs/setup_YYYYMMDD_HHMMSS.log` |
 | State cache | `build_logs/.setup_state.json` / `build_logs/.build_state.json` |
-| App runtime logs | `<app_documents>/error_logs/berry_errors.log` |
+| App runtime logs | `<app_documents>/error_logs/richy_errors.log` |
 
 ---
 

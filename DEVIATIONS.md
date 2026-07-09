@@ -46,11 +46,11 @@ The v13.2.0 API uses `filterList` (type `List<FilterModel>?`), not `customFilter
 ### What We Did
 ```dart
 FilterEditorConfigs(
-  filterList: BerryFilters.all,
+  filterList: RichyFilters.all,
   ...
 )
 ```
-Where `BerryFilters.all` returns a `List<FilterModel>` of 5 entries, each with
+Where `RichyFilters.all` returns a `List<FilterModel>` of 5 entries, each with
 a `name` and a `FilterMatrix` (4×5 `List<List<double>>`).
 
 ---
@@ -125,7 +125,7 @@ instead of the older `Share.shareXFiles(...)` or `Share.share(...)`.
 await SharePlus.instance.share(
   ShareParams(
     files: [XFile(file.path)],
-    subject: 'BERRY Lite',
+    subject: 'RICHY Lite',
   ),
 );
 ```
@@ -152,7 +152,7 @@ The build scripts handle this:
 The error logger writes to the app's documents directory via `path_provider`.
 The build scripts also write build logs to `error_logs/` at the project root.
 These are separate log streams:
-- **App runtime logs**: `<app_documents>/error_logs/berry_errors.log`
+- **App runtime logs**: `<app_documents>/error_logs/richy_errors.log`
 - **Build logs**: `<project_root>/error_logs/build_android_*.log`
 
 ---

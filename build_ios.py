@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-BERRY Lite — iOS Build & Test Script
+RICHY Lite — iOS Build & Test Script
 =====================================
-This script handles iOS build for BERRY Lite. Since iOS builds
+This script handles iOS build for RICHY Lite. Since iOS builds
 require macOS with Xcode, this script:
   1. Checks the local platform (warns if not macOS)
   2. Scans for available build tools:
@@ -357,7 +357,7 @@ def create_eas_json() -> bool:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="BERRY Lite — iOS Build & Test Script"
+        description="RICHY Lite — iOS Build & Test Script"
     )
     parser.add_argument(
         "--eas", action="store_true",
@@ -374,7 +374,7 @@ def main():
     args = parser.parse_args()
 
     log("=" * 60)
-    log("  BERRY Lite — iOS Build Script")
+    log("  RICHY Lite — iOS Build Script")
     log(f"  Platform: {platform.system()} {platform.release()}")
     log(f"  Project:  {PROJECT_DIR}")
     log("=" * 60)
