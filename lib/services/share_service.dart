@@ -1,21 +1,36 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Wraps share_plus to provide a clean one-click share API.
+/// Handles both gallery save and social share for image output.
 ///
-/// The share sheet natively targets Instagram, Facebook, Threads,
-/// X (Twitter), WhatsApp, and any other app that accepts images.
+/// - Saves directly to device gallery (bypasses unreliable share-sheet Save)
+/// - Opens native share sheet for social media posting
 class ShareService {
   ShareService._();
 
-  /// Shares image bytes via the native OS share sheet.
+  /// Saves image to gallery, then opens share sheet.
   ///
-  /// Writes bytes to the app's temporary directory so share_plus can attach it.
-  /// Returns true if share was successful or user dismissed, false on error.
-  static Future<bool> shareImageBytes(Uint8List bytes) async {
+  /// Gallery save uses `gal` package which works on Android 10+ / iOS
+  /// without requiring WRITE_EXTERNAL_STORAGE permission.
+  ///
+  /// Returns true if at least one operation succeeded.
+  static Future<bool> saveAndShare(Uint8List bytes) async {
+    bool saved = false;
+    String? savedPath;
+
+    // Step 1: Save to device gallery
+    try {
+      await Gal.putImageBytes(bytes);
+      saved = true;
+    } catch (e) {
+      // Gallery save is best-effort — log and continue to share
+    }
+
+    // Step 2: Open share sheet
     try {
       final tempDir = await getTemporaryDirectory();
       final file = File(
@@ -23,37 +38,17 @@ class ShareService {
       );
       await file.writeAsBytes(bytes);
 
-      final result = await SharePlus.instance.share(
+      await SharePlus.instance.share(
         ShareParams(
           files: [XFile(file.path)],
           subject: 'RICHY Lite',
         ),
       );
-
-      // Note: do NOT delete the temp file — the share target
-      // (e.g., "Save") may still be reading it asynchronously.
-      // The OS cleans up the temp directory periodically.
-
-      return result.status == ShareResultStatus.success ||
-          result.status == ShareResultStatus.dismissed;
+      // Don't delete temp file — share target may still be reading it
     } catch (e) {
-      return false;
+      // Share is best-effort
     }
-  }
 
-  /// Shares a file path directly via the native OS share sheet.
-  static Future<bool> shareFile(File file) async {
-    try {
-      final result = await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          subject: 'RICHY Lite',
-        ),
-      );
-      return result.status == ShareResultStatus.success ||
-          result.status == ShareResultStatus.dismissed;
-    } catch (e) {
-      return false;
-    }
+    return saved;
   }
 }

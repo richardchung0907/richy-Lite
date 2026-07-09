@@ -106,12 +106,19 @@ class RichyEditorScreen extends StatelessWidget {
           if (context.mounted) {
             Navigator.of(context).pop();
           }
-          // Share in background (no await needed on the editor context)
+          // Save to gallery + share in background
           try {
-            await ErrorLogger.log('Editor completed — sharing ${bytes.length} bytes');
-            await ShareService.shareImageBytes(bytes);
+            await ErrorLogger.log('Editor completed — saving ${bytes.length} bytes');
+            final saved = await ShareService.saveAndShare(bytes);
+            await ErrorLogger.log(
+              saved ? 'Saved to gallery + shared' : 'Shared (gallery save skipped)',
+            );
           } catch (e, stack) {
-            await ErrorLogger.log('Share failed', error: e, stackTrace: stack);
+            await ErrorLogger.log(
+              'Save/share pipeline failed',
+              error: e,
+              stackTrace: stack,
+            );
           }
         },
         onCloseEditor: (_) {

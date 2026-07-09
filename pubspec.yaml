@@ -28,6 +28,9 @@ dependencies:
   # File system paths
   path_provider: ^2.1.0
 
+  # Save images directly to device gallery
+  gal: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
