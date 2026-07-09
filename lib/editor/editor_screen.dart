@@ -114,8 +114,10 @@ class RichyEditorScreen extends StatelessWidget {
         },
         onCloseEditor: (_) {
           ErrorLogger.log('Editor closed by user');
-          // Editor auto-pops after this callback — do NOT call Navigator.pop()
-          // here or the route stack will double-pop, leaving a black screen.
+          // Pop back to home — the editor does NOT auto-pop
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
         },
       ),
     );

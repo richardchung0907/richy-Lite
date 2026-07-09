@@ -30,10 +30,9 @@ class ShareService {
         ),
       );
 
-      // Clean up temp file
-      try {
-        if (await file.exists()) await file.delete();
-      } catch (_) {}
+      // Note: do NOT delete the temp file — the share target
+      // (e.g., "Save") may still be reading it asynchronously.
+      // The OS cleans up the temp directory periodically.
 
       return result.status == ShareResultStatus.success ||
           result.status == ShareResultStatus.dismissed;
