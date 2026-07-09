@@ -101,16 +101,21 @@ class RichyEditorScreen extends StatelessWidget {
       configs: _buildConfigs(context),
       callbacks: ProImageEditorCallbacks(
         onImageEditingComplete: (bytes) async {
-          await ErrorLogger.log('Editor completed — sharing ${bytes.length} bytes');
-          await ShareService.shareImageBytes(bytes);
-          // Pop back to home after share sheet
+          try {
+            await ErrorLogger.log('Editor completed — sharing ${bytes.length} bytes');
+            await ShareService.shareImageBytes(bytes);
+          } catch (e, stack) {
+            await ErrorLogger.log('Share failed', error: e, stackTrace: stack);
+          }
+          // Pop back to home — use a simple pop since editor is a pushed route
           if (context.mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).pop();
           }
         },
         onCloseEditor: (_) {
           ErrorLogger.log('Editor closed by user');
-          Navigator.of(context).pop();
+          // Editor auto-pops after this callback — do NOT call Navigator.pop()
+          // here or the route stack will double-pop, leaving a black screen.
         },
       ),
     );
