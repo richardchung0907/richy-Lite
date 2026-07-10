@@ -8,9 +8,6 @@ import '../editor/editor_screen.dart';
 import '../utils/error_logger.dart';
 
 /// Home screen — the entry point for RICHY Lite.
-///
-/// Shows a clean minimalist header "RICHY", a large center illustration
-/// placeholder, and two primary CTA buttons: Take Photo & Open Gallery.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -20,9 +17,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
-  bool _isNavigating = false; // prevents home flash before editor opens
+
+  /// Set BEFORE opening the camera/gallery so when the native
+  /// activity closes, Flutter renders a loading overlay instead
+  /// of flashing the home screen content.
+  bool _isLoading = false;
 
   Future<void> _pickFromCamera() async {
+    // ── Set loading BEFORE camera opens ───────────────────────
+    setState(() => _isLoading = true);
+
     try {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
@@ -31,7 +35,15 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       if (photo != null) {
         await ErrorLogger.log('Photo captured from camera: ${photo.path}');
-        _navigateToEditor(File(photo.path));
+        // Await the editor route so the loading overlay stays until
+        // the editor is fully on screen.
+        if (mounted) {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RichyEditorScreen(imageFile: File(photo.path)),
+            ),
+          );
+        }
       }
     } catch (e, stack) {
       await ErrorLogger.log(
@@ -47,10 +59,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _pickFromGallery() async {
+    setState(() => _isLoading = true);
+
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -58,7 +74,13 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       if (image != null) {
         await ErrorLogger.log('Image picked from gallery: ${image.path}');
-        _navigateToEditor(File(image.path));
+        if (mounted) {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RichyEditorScreen(imageFile: File(image.path)),
+            ),
+          );
+        }
       }
     } catch (e, stack) {
       await ErrorLogger.log(
@@ -74,117 +96,112 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _navigateToEditor(File imageFile) {
-    setState(() => _isNavigating = true);
-    // Push editor immediately — prevents home screen flash after camera close
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => RichyEditorScreen(imageFile: imageFile),
-      ),
-    ).then((_) {
-      if (mounted) setState(() => _isNavigating = false);
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // While navigating to editor, show empty scaffold with app background
-    // to avoid the home screen flash before the editor route opens
-    if (_isNavigating) {
-      return const Scaffold(backgroundColor: Color(0xFFFFF0F3));
-    }
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
-
-              // ── Header ──────────────────────────────────────
-              Text(
-                'home.title'.tr(),
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      letterSpacing: 3,
-                      color: const Color(0xFFE6395A),
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'home.subtitle'.tr(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      letterSpacing: 6,
-                      fontWeight: FontWeight.w300,
-                    ),
-              ),
-
-              const Spacer(flex: 1),
-
-              // ── Center Placeholder ──────────────────────────
-              Container(
-                width: double.infinity,
-                height: 280,
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(180),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: const Color(0xFFFFD6E0),
-                    width: 2,
-                    strokeAlign: BorderSide.strokeAlignInside,
+    return Stack(
+      children: [
+        // ── Home content ─────────────────────────────────────
+        Scaffold(
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const Spacer(flex: 2),
+                  Text(
+                    'home.title'.tr(),
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          letterSpacing: 3,
+                          color: const Color(0xFFE6395A),
+                        ),
                   ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.camera_alt_rounded,
-                      size: 72,
-                      color: Color(0xFFFFB3C6),
+                  const SizedBox(height: 4),
+                  Text(
+                    'home.subtitle'.tr(),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          letterSpacing: 6,
+                          fontWeight: FontWeight.w300,
+                        ),
+                  ),
+                  const Spacer(flex: 1),
+                  Container(
+                    width: double.infinity,
+                    height: 280,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(180),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: const Color(0xFFFFD6E0),
+                        width: 2,
+                        strokeAlign: BorderSide.strokeAlignInside,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'home.empty_state'.tr(),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF9E9E9E),
-                            height: 1.6,
-                          ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.camera_alt_rounded,
+                          size: 72,
+                          color: Color(0xFFFFB3C6),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'home.empty_state'.tr(),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: const Color(0xFF9E9E9E),
+                                height: 1.6,
+                              ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const Spacer(flex: 2),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: _pickFromCamera,
+                      icon: const Icon(Icons.camera_alt_rounded, size: 22),
+                      label: Text('home.take_photo'.tr()),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton.icon(
+                      onPressed: _pickFromGallery,
+                      icon: const Icon(Icons.photo_library_rounded, size: 22),
+                      label: Text('home.open_gallery'.tr()),
+                    ),
+                  ),
+                  const Spacer(flex: 1),
+                ],
               ),
-
-              const Spacer(flex: 2),
-
-              // ── Action Buttons ──────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _pickFromCamera,
-                  icon: const Icon(Icons.camera_alt_rounded, size: 22),
-                  label: Text('home.take_photo'.tr()),
-                ),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton.icon(
-                  onPressed: _pickFromGallery,
-                  icon: const Icon(Icons.photo_library_rounded, size: 22),
-                  label: Text('home.open_gallery'.tr()),
-                ),
-              ),
-
-              const Spacer(flex: 1),
-            ],
+            ),
           ),
         ),
-      ),
+
+        // ── Loading overlay (active while camera/gallery is open) ─
+        if (_isLoading)
+          Container(
+            color: const Color(0xFFFFF0F3),
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE6395A)),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
