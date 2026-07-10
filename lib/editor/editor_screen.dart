@@ -1,13 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:gal/gal.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
-import 'package:share_plus/share_plus.dart';
 
-import 'custom_filters.dart';
+import '../services/share_service.dart';
 import '../utils/error_logger.dart';
+import 'custom_filters.dart';
 
 /// Wraps [ProImageEditor] with RICHY Lite's streamlined configuration:
 /// - Only Filter + Tune (Brightness/Contrast/Saturation) tools enabled
@@ -106,16 +104,10 @@ class RichyEditorScreen extends StatelessWidget {
           try {
             await ErrorLogger.log('Editor completed — saving ${bytes.length} bytes');
 
-            // Step 1: Save to gallery (reliable, direct MediaStore write)
-            bool saved = false;
-            try {
-              await Gal.putImageBytes(bytes);
-              saved = true;
-            } catch (e) {
-              await ErrorLogger.log('Gallery save failed', error: e);
-            }
+            // Delegate save + share to ShareService
+            final saved = await ShareService.saveAndShare(bytes, context: context);
 
-            // Step 2: Show confirmation on editor before popping
+            // Confirmation + pop
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -123,34 +115,18 @@ class RichyEditorScreen extends StatelessWidget {
                       ? 'Saved to gallery! Opening share…'
                       : 'Opening share…'),
                   duration: const Duration(seconds: 2),
-                  backgroundColor: saved
-                      ? const Color(0xFF4CAF50)
-                      : const Color(0xFFFF9800),
+                  backgroundColor:
+                      saved ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
                 ),
               );
-              // Brief delay so user sees the SnackBar
               await Future.delayed(const Duration(milliseconds: 800));
               Navigator.of(context).pop();
             }
 
-            // Step 3: Open share sheet from home screen for social sharing
-            // (not for Save — that's already handled by gal above)
-            try {
-              final tempDir = await getTemporaryDirectory();
-              final file = File(
-                '${tempDir.path}/richy_share_${DateTime.now().millisecondsSinceEpoch}.jpg',
-              );
-              await file.writeAsBytes(bytes);
-              await SharePlus.instance.share(
-                ShareParams(files: [XFile(file.path)], subject: 'RICHY Lite'),
-              );
-            } catch (e) {
-              // Share is best-effort
-            }
-
             await ErrorLogger.log(saved ? 'Saved to gallery + shared' : 'Shared only');
           } catch (e, stack) {
-            await ErrorLogger.log('Save/share pipeline failed', error: e, stackTrace: stack);
+            await ErrorLogger.log('Save/share pipeline failed',
+                error: e, stackTrace: stack);
           }
         },
         onCloseEditor: (_) {

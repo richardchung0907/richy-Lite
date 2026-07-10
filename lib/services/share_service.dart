@@ -1,36 +1,40 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Handles both gallery save and social share for image output.
+/// Unified save + share pipeline for RICHY Lite output images.
 ///
-/// - Saves directly to device gallery (bypasses unreliable share-sheet Save)
-/// - Opens native share sheet for social media posting
+/// - Saves to device gallery via `gal` (MediaStore, no extra permissions)
+/// - Opens native share sheet via `share_plus` for social sharing
+/// - Handles iPad `sharePositionOrigin` to prevent crashes
 class ShareService {
   ShareService._();
 
-  /// Saves image to gallery, then opens share sheet.
+  /// Save image bytes to gallery, then open the system share sheet.
   ///
-  /// Gallery save uses `gal` package which works on Android 10+ / iOS
-  /// without requiring WRITE_EXTERNAL_STORAGE permission.
+  /// [context] is optional but should be provided on iPad to supply the
+  /// `sharePositionOrigin` anchor (prevents a hard crash on iPadOS).
   ///
-  /// Returns true if at least one operation succeeded.
-  static Future<bool> saveAndShare(Uint8List bytes) async {
+  /// Returns `true` if gallery save succeeded.
+  static Future<bool> saveAndShare(
+    Uint8List bytes, {
+    BuildContext? context,
+  }) async {
     bool saved = false;
-    String? savedPath;
 
-    // Step 1: Save to device gallery
+    // ── Step 1: Save to gallery ───────────────────────────────
     try {
       await Gal.putImageBytes(bytes);
       saved = true;
-    } catch (e) {
-      // Gallery save is best-effort — log and continue to share
+    } catch (_) {
+      // Best-effort — gallery save may be unavailable
     }
 
-    // Step 2: Open share sheet
+    // ── Step 2: Share sheet ───────────────────────────────────
     try {
       final tempDir = await getTemporaryDirectory();
       final file = File(
@@ -38,15 +42,25 @@ class ShareService {
       );
       await file.writeAsBytes(bytes);
 
+      Rect? anchor;
+      if (context != null) {
+        try {
+          final box = context.findRenderObject() as RenderBox?;
+          if (box != null && box.hasSize) {
+            anchor = box.localToGlobal(Offset.zero) & box.size;
+          }
+        } catch (_) {}
+      }
+
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(file.path)],
           subject: 'RICHY Lite',
+          sharePositionOrigin: anchor,
         ),
       );
-      // Don't delete temp file — share target may still be reading it
-    } catch (e) {
-      // Share is best-effort
+    } catch (_) {
+      // Best-effort
     }
 
     return saved;

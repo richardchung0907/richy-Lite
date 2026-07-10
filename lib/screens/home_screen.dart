@@ -30,7 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 92,
+        maxWidth: 3840,
+        maxHeight: 3840,
+        imageQuality: 95,
         preferredCameraDevice: CameraDevice.rear,
       );
       if (photo != null) {
@@ -70,7 +72,9 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 92,
+        maxWidth: 3840,
+        maxHeight: 3840,
+        imageQuality: 95,
       );
       if (image != null) {
         await ErrorLogger.log('Image picked from gallery: ${image.path}');
