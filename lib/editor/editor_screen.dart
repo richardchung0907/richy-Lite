@@ -101,15 +101,20 @@ class RichyEditorScreen extends StatelessWidget {
       configs: _buildConfigs(context),
       callbacks: ProImageEditorCallbacks(
         onImageEditingComplete: (bytes) async {
+          // Capture navigator BEFORE await so it survives background transitions
+          final navigator = Navigator.of(context);
+          final messenger = ScaffoldMessenger.of(context);
+
           try {
             await ErrorLogger.log('Editor completed — saving ${bytes.length} bytes');
 
-            // Delegate save + share to ShareService
+            // Step 1: Save + share while the editor's loading dialog
+            // ("Changes are being applied") safely covers the screen
             final saved = await ShareService.saveAndShare(bytes, context: context);
 
-            // Confirmation + pop
+            // Step 2: Only after share sheet is dismissed, show feedback + pop
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text(saved
                       ? 'Saved to gallery! Opening share…'
@@ -120,13 +125,16 @@ class RichyEditorScreen extends StatelessWidget {
                 ),
               );
               await Future.delayed(const Duration(milliseconds: 800));
-              Navigator.of(context).pop();
             }
+            // Pop regardless of mounted state — navigator was captured before await
+            navigator.pop();
 
             await ErrorLogger.log(saved ? 'Saved to gallery + shared' : 'Shared only');
           } catch (e, stack) {
             await ErrorLogger.log('Save/share pipeline failed',
                 error: e, stackTrace: stack);
+            // Ensure we always pop even on error
+            if (navigator.canPop()) navigator.pop();
           }
         },
         onCloseEditor: (_) {
