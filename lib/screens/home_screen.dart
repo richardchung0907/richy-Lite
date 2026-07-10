@@ -20,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
+  bool _isNavigating = false; // prevents home flash before editor opens
 
   Future<void> _pickFromCamera() async {
     try {
@@ -77,15 +78,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToEditor(File imageFile) {
+    setState(() => _isNavigating = true);
+    // Push editor immediately — prevents home screen flash after camera close
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => RichyEditorScreen(imageFile: imageFile),
       ),
-    );
+    ).then((_) {
+      if (mounted) setState(() => _isNavigating = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // While navigating to editor, show empty scaffold with app background
+    // to avoid the home screen flash before the editor route opens
+    if (_isNavigating) {
+      return const Scaffold(backgroundColor: Color(0xFFFFF0F3));
+    }
     return Scaffold(
       body: SafeArea(
         child: Padding(
