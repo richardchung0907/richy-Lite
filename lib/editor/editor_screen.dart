@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
 
-import '../services/share_service.dart';
 import '../utils/error_logger.dart';
 import 'custom_filters.dart';
 
@@ -101,45 +100,15 @@ class RichyEditorScreen extends StatelessWidget {
       configs: _buildConfigs(context),
       callbacks: ProImageEditorCallbacks(
         onImageEditingComplete: (bytes) async {
-          // Capture navigator BEFORE await so it survives background transitions
-          final navigator = Navigator.of(context);
-          final messenger = ScaffoldMessenger.of(context);
-
-          try {
-            await ErrorLogger.log('Editor completed — saving ${bytes.length} bytes');
-
-            // Step 1: Save + share while the editor's loading dialog
-            // ("Changes are being applied") safely covers the screen
-            final saved = await ShareService.saveAndShare(bytes, context: context);
-
-            // Step 2: Only after share sheet is dismissed, show feedback + pop
-            if (context.mounted) {
-              messenger.showSnackBar(
-                SnackBar(
-                  content: Text(saved
-                      ? 'Saved to gallery! Opening share…'
-                      : 'Opening share…'),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor:
-                      saved ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
-                ),
-              );
-              await Future.delayed(const Duration(milliseconds: 800));
-            }
-            // Pop regardless of mounted state — navigator was captured before await
-            navigator.pop();
-
-            await ErrorLogger.log(saved ? 'Saved to gallery + shared' : 'Shared only');
-          } catch (e, stack) {
-            await ErrorLogger.log('Save/share pipeline failed',
-                error: e, stackTrace: stack);
-            // Ensure we always pop even on error
-            if (navigator.canPop()) navigator.pop();
+          // Decoupled: editor only pops with image bytes.
+          // HomeScreen will handle save + share after editor closes.
+          await ErrorLogger.log('Editor completed — ${bytes.length} bytes');
+          if (context.mounted) {
+            Navigator.of(context).pop(bytes);
           }
         },
         onCloseEditor: (_) {
           ErrorLogger.log('Editor closed by user');
-          // Pop back to home — the editor does NOT auto-pop
           if (context.mounted) {
             Navigator.of(context).pop();
           }

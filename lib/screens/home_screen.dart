@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../editor/editor_screen.dart';
+import '../services/share_service.dart';
 import '../utils/error_logger.dart';
 
 /// Home screen — the entry point for RICHY Lite.
@@ -37,14 +39,17 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       if (photo != null) {
         await ErrorLogger.log('Photo captured from camera: ${photo.path}');
-        // Await the editor route so the loading overlay stays until
-        // the editor is fully on screen.
         if (mounted) {
-          await Navigator.of(context).push(
+          // Push editor and wait for it to return edited bytes
+          final Uint8List? editedBytes = await Navigator.of(context).push<Uint8List>(
             MaterialPageRoute(
               builder: (_) => RichyEditorScreen(imageFile: File(photo.path)),
             ),
           );
+          // Editor has fully closed. Now safe to share from HomeScreen.
+          if (editedBytes != null && mounted) {
+            await ShareService.saveAndShare(editedBytes, context: context);
+          }
         }
       }
     } catch (e, stack) {
@@ -79,11 +84,14 @@ class _HomeScreenState extends State<HomeScreen> {
       if (image != null) {
         await ErrorLogger.log('Image picked from gallery: ${image.path}');
         if (mounted) {
-          await Navigator.of(context).push(
+          final Uint8List? editedBytes = await Navigator.of(context).push<Uint8List>(
             MaterialPageRoute(
               builder: (_) => RichyEditorScreen(imageFile: File(image.path)),
             ),
           );
+          if (editedBytes != null && mounted) {
+            await ShareService.saveAndShare(editedBytes, context: context);
+          }
         }
       }
     } catch (e, stack) {
