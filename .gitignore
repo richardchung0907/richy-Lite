@@ -43,4 +43,5 @@ web/.dart_tool/
 error_logs/
 build_logs/
 run_recordings/
+chat_export_*.md
 %USERPROFILE%/

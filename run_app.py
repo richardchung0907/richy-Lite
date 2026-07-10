@@ -349,6 +349,8 @@ def start_hot_reload():
     log("  └─────────────────────────────────────────────┘")
     log("")
 
+    import threading
+
     flutter = find_exe("flutter")
     devices = check_running_emulators()
     device_arg = ["-d", devices[0]] if devices else []
@@ -357,23 +359,39 @@ def start_hot_reload():
     proc = subprocess.Popen(
         [flutter, "run", "--debug"] + device_arg,
         cwd=PROJECT_DIR,
-        stdin=subprocess.PIPE,
+        stdin=subprocess.PIPE,  # 保留給 AI AGENT 運作與除錯使用
         stdout=sys.stdout,
         stderr=sys.stderr,
         text=True,
     )
 
+    # 智慧雙向轉發橋樑（讓用戶可以在終端機按 r + Enter 進行 Hot Reload）
+    def input_bridge():
+        try:
+            while proc.poll() is None:
+                line = sys.stdin.readline()
+                if not line:
+                    break
+                if proc.poll() is None and proc.stdin:
+                    proc.stdin.write(line)
+                    proc.stdin.flush()
+        except Exception:
+            pass
+
+    bridge_thread = threading.Thread(target=input_bridge, daemon=True)
+    bridge_thread.start()
+
     try:
         proc.wait()
     except KeyboardInterrupt:
-        log("\n  ℹ Sending 'q' to quit Flutter…")
+        # ⚡ 當人類按下 Ctrl+C 時，直接強制擊殺，乾淨俐落！
+        log("\n  ℹ Ctrl+C detected. Forcibly terminating Flutter process...")
         try:
-            proc.stdin.write("q\n")
-            proc.stdin.flush()
-            proc.wait(timeout=10)
+            proc.kill()  # 直接強殺，徹底消滅 "Terminate batch job" 提示
+            proc.wait()  # 釋放資源
         except Exception:
-            proc.terminate()
-            proc.wait()
+            pass
+        log("  ✓ Terminated.")
 
 
 # ── Main ─────────────────────────────────────────────────────────
