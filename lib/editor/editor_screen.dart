@@ -7,11 +7,10 @@ import '../utils/error_logger.dart';
 import 'custom_filters.dart';
 
 /// Wraps [ProImageEditor] with RICHY Lite's streamlined configuration:
-/// - Only Filter + Tune (Brightness/Contrast/Saturation) tools enabled
+/// - Only Filter + Tune tools enabled
 /// - 5 custom premium color filter presets
-/// - Reset button to clear all adjustments
-/// - On "Done": captures output bytes and triggers native share sheet
-class RichyEditorScreen extends StatelessWidget {
+/// - Anti-double-pop guard prevents navigator stack corruption
+class RichyEditorScreen extends StatefulWidget {
   const RichyEditorScreen({
     super.key,
     required this.imageFile,
@@ -19,10 +18,17 @@ class RichyEditorScreen extends StatelessWidget {
 
   final File imageFile;
 
-  // ── Main Editor Config ─────────────────────────────────────────
+  @override
+  State<RichyEditorScreen> createState() => _RichyEditorScreenState();
+}
+
+class _RichyEditorScreenState extends State<RichyEditorScreen> {
+  /// Prevents double-pop when the tick button fires twice
+  /// (e.g. rapid double-tap or pro_image_editor internal re-fire)
+  bool _isFinishing = false;
+
   ProImageEditorConfigs _buildConfigs(BuildContext context) {
     return ProImageEditorConfigs(
-      // Pink theme to match the app
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF6B8A),
@@ -30,24 +36,16 @@ class RichyEditorScreen extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-
-      // ── Main Editor: only show Filter + Tune tools ────────────
-      mainEditor: MainEditorConfigs(
-        tools: const [
+      mainEditor: const MainEditorConfigs(
+        tools: [
           SubEditorMode.filter,
           SubEditorMode.tune,
         ],
       ),
-
-      // ── Filter Editor: 5 custom presets ───────────────────────
       filterEditor: FilterEditorConfigs(
         filterList: RichyFilters.all,
-        // enableMultiSelection: false means each new filter replaces
-        // the previous one (consumer-friendly single-filter mode)
         enableMultiSelection: false,
       ),
-
-      // ── Tune Editor: only Brightness / Contrast / Saturation ──
       tuneEditor: TuneEditorConfigs(
         tuneAdjustmentOptions: [
           TuneAdjustmentItem(
@@ -82,8 +80,6 @@ class RichyEditorScreen extends StatelessWidget {
           ),
         ],
       ),
-
-      // Disable unused editors explicitly (belt-and-suspenders)
       paintEditor: const PaintEditorConfigs(),
       textEditor: const TextEditorConfigs(),
       cropRotateEditor: const CropRotateEditorConfigs(),
@@ -96,20 +92,24 @@ class RichyEditorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProImageEditor.file(
-      imageFile,
+      widget.imageFile,
       configs: _buildConfigs(context),
       callbacks: ProImageEditorCallbacks(
         onImageEditingComplete: (bytes) async {
-          // Decoupled: editor only pops with image bytes.
-          // HomeScreen will handle save + share after editor closes.
+          if (_isFinishing) return;
+          _isFinishing = true;
+
           await ErrorLogger.log('Editor completed — ${bytes.length} bytes');
-          if (context.mounted) {
+          if (mounted) {
             Navigator.of(context).pop(bytes);
           }
         },
         onCloseEditor: (_) {
+          if (_isFinishing) return;
+          _isFinishing = true;
+
           ErrorLogger.log('Editor closed by user');
-          if (context.mounted) {
+          if (mounted) {
             Navigator.of(context).pop();
           }
         },
