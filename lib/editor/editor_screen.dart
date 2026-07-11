@@ -44,9 +44,7 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
           SubEditorMode.filter,
           SubEditorMode.tune,
         ],
-        // Inline sub-editors avoid route-push state corruption
-        // that causes tune sliders to snap to stale values.
-        enableSubEditorPage: true,
+        enableSubEditorPage: false,
       ),
       filterEditor: FilterEditorConfigs(
         filterList: RichyFilters.all,
