@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../editor/editor_screen.dart';
+import '../services/ad_manager.dart';
 import '../services/share_service.dart';
 import '../utils/error_logger.dart';
 
@@ -24,6 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
   /// activity closes, Flutter renders a loading overlay instead
   /// of flashing the home screen content.
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Preload the first interstitial ad for this session
+    AdManager.loadInterstitial();
+  }
 
   Future<void> _pickFromCamera() async {
     // ── Set loading BEFORE camera opens ───────────────────────
@@ -46,8 +54,10 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (_) => RichyEditorScreen(imageFile: File(photo.path)),
             ),
           );
-          // Editor has fully closed. Now safe to share from HomeScreen.
+          // Editor has fully closed. Now safe to show ad + share from HomeScreen.
           if (editedBytes != null && mounted) {
+            // Show interstitial ad (non-blocking if ad unavailable)
+            await AdManager.showInterstitial();
             await ShareService.saveAndShare(editedBytes, context: context);
           }
         }
@@ -90,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
           if (editedBytes != null && mounted) {
+            await AdManager.showInterstitial();
             await ShareService.saveAndShare(editedBytes, context: context);
           }
         }

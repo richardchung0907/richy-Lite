@@ -31,6 +31,9 @@ dependencies:
   # Save images directly to device gallery
   gal: ^2.3.0
 
+  # Google AdMob — interstitial ads
+  google_mobile_ads: ^9.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

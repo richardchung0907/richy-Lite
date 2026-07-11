@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'screens/home_screen.dart';
+import 'services/ad_manager.dart';
 import 'theme/app_theme.dart';
 import 'utils/error_logger.dart';
 
@@ -11,6 +12,9 @@ Future<void> main() async {
 
   // Initialize i18n
   await EasyLocalization.ensureInitialized();
+
+  // Initialize Google Mobile Ads SDK
+  await AdManager.init();
 
   // Initialize error logger for test phase
   await ErrorLogger.init();
