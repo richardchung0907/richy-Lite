@@ -67,16 +67,13 @@ def log_error(msg: str, exc: Optional[Exception] = None):
             log(f"    {line}")
 
 
-def cleanup_build_artifacts():
-    """Remove stale build artifacts from previous failed builds.
+def _clear_gradle_cache():
+    """Clear corrupted Gradle daemon/caches that cause tmpdir errors.
 
-    Clears Gradle daemon cache (fixes %USERPROFILE% literal path bug),
-    runs `flutter clean`, and removes the build/ directory.
+    Fixes: 'java.io.tmpdir is set to a directory that doesn't exist:
+    C:\\Users\\...\\%USERPROFILE%\\...' which often appears after
+    environment variable changes or system restarts.
     """
-    log("── Cleaning build artifacts ──")
-
-    # Kill stale Gradle daemons and clear corrupted cache
-    # Fixes: "java.io.tmpdir is set to a directory that doesn't exist"
     gradle_daemon_dir = os.path.expandvars(r"%USERPROFILE%\.gradle\daemon")
     gradle_caches_dir = os.path.expandvars(r"%USERPROFILE%\.gradle\caches")
     for d in [gradle_daemon_dir, gradle_caches_dir]:
@@ -86,6 +83,16 @@ def cleanup_build_artifacts():
                 log(f"  ✓ Cleared {d}")
             except OSError:
                 pass
+
+
+def cleanup_build_artifacts():
+    """Remove stale build artifacts from previous failed builds.
+
+    Runs `flutter clean` and removes the build/ directory.
+    """
+    log("── Cleaning build artifacts ──")
+
+    _clear_gradle_cache()
 
     flutter = find_executable("flutter")
     if flutter:
@@ -605,6 +612,9 @@ def main():
     if not check_project_structure():
         log("\n✗ Not a valid Flutter project. Run setup_and_build.py first.")
         sys.exit(1)
+
+    # Always clear Gradle daemon cache to prevent %USERPROFILE% literal path bug
+    _clear_gradle_cache()
 
     if args.clean:
         cleanup_build_artifacts()
