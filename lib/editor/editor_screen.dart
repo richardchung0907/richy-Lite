@@ -27,74 +27,73 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
   /// (e.g. rapid double-tap or pro_image_editor internal re-fire)
   bool _isFinishing = false;
 
-  /// Created ONCE and reused across all rebuilds.
-  /// Prevents slider value drift and filter layering bugs caused by
-  /// new object references on every `build()` call.
-  late final ProImageEditorConfigs _editorConfigs = ProImageEditorConfigs(
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFFFF6B8A),
-        brightness: Brightness.dark,
-      ),
-      useMaterial3: true,
-    ),
-    mainEditor: const MainEditorConfigs(
-      tools: [
-        SubEditorMode.filter,
-        SubEditorMode.tune,
-      ],
-    ),
-    filterEditor: FilterEditorConfigs(
-      filterList: RichyFilters.all,
-      enableMultiSelection: false,
-    ),
-    tuneEditor: TuneEditorConfigs(
-      tuneAdjustmentOptions: [
-        TuneAdjustmentItem(
-          id: 'brightness',
-          icon: Icons.brightness_6,
-          label: 'Brightness',
-          min: -0.5,
-          max: 0.5,
-          divisions: 200,
-          labelMultiplier: 200,
-          toMatrix: ColorFilterAddons.brightness,
-        ),
-        TuneAdjustmentItem(
-          id: 'contrast',
-          icon: Icons.contrast,
-          label: 'Contrast',
-          min: -0.5,
-          max: 0.5,
-          divisions: 200,
-          labelMultiplier: 200,
-          toMatrix: ColorFilterAddons.contrast,
-        ),
-        TuneAdjustmentItem(
-          id: 'saturation',
-          icon: Icons.colorize,
-          label: 'Saturation',
-          min: -0.5,
-          max: 0.5,
-          divisions: 200,
-          labelMultiplier: 200,
-          toMatrix: ColorFilterAddons.saturation,
-        ),
-      ],
-    ),
-    paintEditor: const PaintEditorConfigs(),
-    textEditor: const TextEditorConfigs(),
-    cropRotateEditor: const CropRotateEditorConfigs(),
-    blurEditor: const BlurEditorConfigs(),
-    emojiEditor: const EmojiEditorConfigs(),
-    stickerEditor: const StickerEditorConfigs(),
-  );
-
   @override
   Widget build(BuildContext context) {
+    // Fresh config each build — lets pro_image_editor
+    // correctly reinitialize sub-editor state on re-entry
+    final editorConfigs = ProImageEditorConfigs(
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFFF6B8A),
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      mainEditor: const MainEditorConfigs(
+        tools: [
+          SubEditorMode.filter,
+          SubEditorMode.tune,
+        ],
+      ),
+      filterEditor: FilterEditorConfigs(
+        filterList: RichyFilters.all,
+        enableMultiSelection: false,
+      ),
+      tuneEditor: TuneEditorConfigs(
+        tuneAdjustmentOptions: [
+          TuneAdjustmentItem(
+            id: 'brightness',
+            icon: Icons.brightness_6,
+            label: 'Brightness',
+            min: -0.5,
+            max: 0.5,
+            divisions: 200,
+            labelMultiplier: 200,
+            toMatrix: ColorFilterAddons.brightness,
+          ),
+          TuneAdjustmentItem(
+            id: 'contrast',
+            icon: Icons.contrast,
+            label: 'Contrast',
+            min: -0.5,
+            max: 0.5,
+            divisions: 200,
+            labelMultiplier: 200,
+            toMatrix: ColorFilterAddons.contrast,
+          ),
+          TuneAdjustmentItem(
+            id: 'saturation',
+            icon: Icons.colorize,
+            label: 'Saturation',
+            min: -0.5,
+            max: 0.5,
+            divisions: 200,
+            labelMultiplier: 200,
+            toMatrix: ColorFilterAddons.saturation,
+          ),
+        ],
+      ),
+      paintEditor: const PaintEditorConfigs(),
+      textEditor: const TextEditorConfigs(),
+      cropRotateEditor: const CropRotateEditorConfigs(),
+      blurEditor: const BlurEditorConfigs(),
+      emojiEditor: const EmojiEditorConfigs(),
+      stickerEditor: const StickerEditorConfigs(),
+    );
+
     return ProImageEditor.file(
       widget.imageFile,
-      configs: _editorConfigs,
+      configs: editorConfigs,
       callbacks: ProImageEditorCallbacks(
         onImageEditingComplete: (bytes) async {
           if (_isFinishing) return;
