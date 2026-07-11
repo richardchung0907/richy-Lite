@@ -33,6 +33,64 @@ class _HomeScreenState extends State<HomeScreen> {
     AdManager.loadInterstitial();
   }
 
+  /// Show a top-positioned toast that overlays everything
+  /// (including any bottom share sheet that may be open).
+  void _showSuccessToast(String message) {
+    if (!mounted) return;
+
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        top: MediaQuery.of(context).padding.top + 16,
+        left: 24,
+        right: 24,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE6395A),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(38),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded,
+                    color: Colors.white, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    Future.delayed(const Duration(milliseconds: 3500), () {
+      if (overlayEntry.mounted) overlayEntry.remove();
+    });
+  }
+
   Future<void> _pickFromCamera() async {
     // ── Set loading BEFORE camera opens ───────────────────────
     setState(() => _isLoading = true);
@@ -56,9 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           // Editor has fully closed. Now safe to show ad + share from HomeScreen.
           if (editedBytes != null && mounted) {
-            // Show interstitial ad (non-blocking if ad unavailable)
             await AdManager.showInterstitial();
-            await ShareService.saveAndShare(editedBytes, context: context);
+            final isSaved = await ShareService.saveAndShare(editedBytes, context: context);
+            if (isSaved && mounted) {
+              _showSuccessToast('✨ 照片已成功储存到相簿！');
+            }
           }
         }
       }
@@ -101,7 +161,10 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           if (editedBytes != null && mounted) {
             await AdManager.showInterstitial();
-            await ShareService.saveAndShare(editedBytes, context: context);
+            final isSaved = await ShareService.saveAndShare(editedBytes, context: context);
+            if (isSaved && mounted) {
+              _showSuccessToast('✨ 照片已成功储存到相簿！');
+            }
           }
         }
       }
