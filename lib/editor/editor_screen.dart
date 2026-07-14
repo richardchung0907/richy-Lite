@@ -35,6 +35,11 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
   /// If the current history pointer matches this value, we can safely close
   /// the editor without showing the "unsaved changes" warning.
   int _lastSavedHistoryPointer = 0;
+  
+  /// Tracks the history length at the time of the last successful save.
+  /// This ensures that if a user undoes to a saved pointer but has unsaved
+  /// redo history, they still get a warning before losing that redo history.
+  int _lastSavedHistoryLength = 1;
 
   void _showSuccessToast(String message) {
     if (!mounted) return;
@@ -123,10 +128,14 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
               leading: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
-                  if (editor.stateManager.historyPointer == _lastSavedHistoryPointer) {
+                  final currentPointer = editor.stateManager.historyPointer;
+                  final currentLength = editor.stateManager.stateHistory.length;
+
+                  if (currentPointer == _lastSavedHistoryPointer && 
+                      currentLength == _lastSavedHistoryLength) {
                     if (mounted) Navigator.of(context).pop();
                   } else {
-                    editor.closeEditor();
+                    editor.closeWarning();
                   }
                 },
               ),
@@ -165,6 +174,7 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                       if (isSaved && mounted) {
                         setState(() {
                           _lastSavedHistoryPointer = editor.stateManager.historyPointer;
+                          _lastSavedHistoryLength = editor.stateManager.stateHistory.length;
                         });
                         _showSuccessToast('✨ 照片已成功储存到相簿！');
                       }
@@ -191,6 +201,7 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                       await AdManager.showInterstitial();
                       setState(() {
                         _lastSavedHistoryPointer = editor.stateManager.historyPointer;
+                        _lastSavedHistoryLength = editor.stateManager.stateHistory.length;
                       });
                       await ShareService.shareImage(bytes, context: context);
                     }
