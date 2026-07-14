@@ -199,10 +199,6 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
 
                     if (bytes != null && mounted) {
                       await AdManager.showInterstitial();
-                      setState(() {
-                        _lastSavedHistoryPointer = editor.stateManager.historyPointer;
-                        _lastSavedHistoryLength = editor.stateManager.stateHistory.length;
-                      });
                       await ShareService.shareImage(bytes, context: context);
                     }
                     _isFinishing = false;
