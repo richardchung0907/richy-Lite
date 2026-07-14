@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths>
-    <cache-path name="cache" path="." />
-    <external-cache-path name="external_cache" path="." />
-    <root-path name="root" path="." />
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1. 允許分享 App 的暫存目錄 (Cache) -->
+    <!-- 許多分享套件（如 share_plus）在分享前會把圖片暫存在這，這行非常重要 -->
+    <cache-path name="shared_images" path="." />
+
+    <!-- 2. 允許分享 App 的內部儲存目錄 (Files) -->
+    <files-path name="shared_files" path="." />
+
+    <!-- 3. 允許分享 外部儲存目錄 (External) -->
+    <external-path name="shared_external_files" path="." />
+    
+    <!-- 4. 允許分享 外置快取目錄 (External Cache) -->
+    <external-cache-path name="shared_external_cache" path="." />
 </paths>

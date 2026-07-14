@@ -33,7 +33,6 @@ dependencies:
 
   # Google AdMob — interstitial ads
   google_mobile_ads: ^9.0.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -44,3 +43,7 @@ flutter:
 
   assets:
     - assets/translations/
+
+dependency_overrides:
+  pro_image_editor:
+    path: packages/pro_image_editor

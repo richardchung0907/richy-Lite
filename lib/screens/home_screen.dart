@@ -106,20 +106,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (photo != null) {
         await ErrorLogger.log('Photo captured from camera: ${photo.path}');
         if (mounted) {
-          // Push editor and wait for it to return edited bytes
           final Uint8List? editedBytes = await Navigator.of(context).push<Uint8List>(
             MaterialPageRoute(
               builder: (_) => RichyEditorScreen(imageFile: File(photo.path)),
             ),
           );
-          // Editor has fully closed. Now safe to show ad + share from HomeScreen.
-          if (editedBytes != null && mounted) {
-            await AdManager.showInterstitial();
-            final isSaved = await ShareService.saveAndShare(editedBytes, context: context);
-            if (isSaved && mounted) {
-              _showSuccessToast('✨ 照片已成功储存到相簿！');
-            }
-          }
         }
       }
     } catch (e, stack) {
@@ -159,13 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (_) => RichyEditorScreen(imageFile: File(image.path)),
             ),
           );
-          if (editedBytes != null && mounted) {
-            await AdManager.showInterstitial();
-            final isSaved = await ShareService.saveAndShare(editedBytes, context: context);
-            if (isSaved && mounted) {
-              _showSuccessToast('✨ 照片已成功储存到相簿！');
-            }
-          }
         }
       }
     } catch (e, stack) {

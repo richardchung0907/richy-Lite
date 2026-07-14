@@ -14,27 +14,26 @@ import 'package:share_plus/share_plus.dart';
 class ShareService {
   ShareService._();
 
-  /// Save image bytes to gallery, then open the system share sheet.
+  /// Save image bytes to gallery.
+  ///
+  /// Returns `true` if gallery save succeeded.
+  static Future<bool> saveImage(Uint8List bytes) async {
+    try {
+      await Gal.putImageBytes(bytes);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Open the system share sheet for the given image bytes.
   ///
   /// [context] is optional but should be provided on iPad to supply the
   /// `sharePositionOrigin` anchor (prevents a hard crash on iPadOS).
-  ///
-  /// Returns `true` if gallery save succeeded.
-  static Future<bool> saveAndShare(
+  static Future<void> shareImage(
     Uint8List bytes, {
     BuildContext? context,
   }) async {
-    bool saved = false;
-
-    // ── Step 1: Save to gallery ───────────────────────────────
-    try {
-      await Gal.putImageBytes(bytes);
-      saved = true;
-    } catch (_) {
-      // Best-effort — gallery save may be unavailable
-    }
-
-    // ── Step 2: Share sheet ───────────────────────────────────
     try {
       final tempDir = await getTemporaryDirectory();
       final file = File(
@@ -62,7 +61,5 @@ class ShareService {
     } catch (_) {
       // Best-effort
     }
-
-    return saved;
   }
 }

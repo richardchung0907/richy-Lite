@@ -29,7 +29,8 @@
         android:label="RICHY Lite"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:requestLegacyExternalStorage="true">
+        android:requestLegacyExternalStorage="true"
+        android:enableOnBackInvokedCallback="true">
 
         <!-- Google AdMob Test App ID (replace with real ID in production) -->
         <meta-data
