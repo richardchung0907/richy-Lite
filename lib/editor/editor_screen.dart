@@ -46,6 +46,16 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
 
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
+    bool isRemoved = false;
+
+    void removeToast() {
+      if (!isRemoved) {
+        isRemoved = true;
+        try {
+          overlayEntry.remove();
+        } catch (_) {}
+      }
+    }
 
     overlayEntry = OverlayEntry(
       builder: (_) => Positioned(
@@ -54,31 +64,39 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
         right: 24,
         child: Material(
           color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6395A),
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(38),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          child: Dismissible(
+            key: UniqueKey(),
+            direction: DismissDirection.horizontal,
+            onDismissed: (_) => removeToast(),
+            child: GestureDetector(
+              onTap: removeToast,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6395A),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(38),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -89,9 +107,7 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
 
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        try {
-          overlayEntry.remove();
-        } catch (_) {}
+        removeToast();
       }
     });
   }
@@ -176,7 +192,7 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                           _lastSavedHistoryPointer = editor.stateManager.historyPointer;
                           _lastSavedHistoryLength = editor.stateManager.stateHistory.length;
                         });
-                        _showSuccessToast('✨ 照片已成功储存到相簿！');
+                        _showSuccessToast('✨ Photo saved to gallery!');
                       }
                     }
                     _isFinishing = false;
