@@ -58,12 +58,20 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
     }
 
     overlayEntry = OverlayEntry(
-      builder: (_) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
-        left: 24,
-        right: 24,
-        child: Material(
-          color: Colors.transparent,
+      builder: (_) => Stack(
+        children: [
+          Positioned.fill(
+            child: const ModalBarrier(
+              color: Colors.transparent,
+              dismissible: false,
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 24,
+            right: 24,
+            child: Material(
+              color: Colors.transparent,
           child: Dismissible(
             key: UniqueKey(),
             direction: DismissDirection.horizontal,
@@ -99,7 +107,7 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
 
