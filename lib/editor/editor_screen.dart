@@ -186,7 +186,11 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
 
                     if (bytes != null && mounted) {
                       await AdManager.showInterstitial();
+                      
+                      if (mounted) _showLoading(context);
                       final isSaved = await ShareService.saveImage(bytes);
+                      if (mounted) Navigator.of(context).pop();
+
                       if (isSaved && mounted) {
                         setState(() {
                           _lastSavedHistoryPointer = editor.stateManager.historyPointer;
@@ -215,7 +219,10 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
 
                     if (bytes != null && mounted) {
                       await AdManager.showInterstitial();
+                      
+                      if (mounted) _showLoading(context);
                       await ShareService.shareImage(bytes, context: context);
+                      if (mounted) Navigator.of(context).pop();
                     }
                     _isFinishing = false;
                   },
