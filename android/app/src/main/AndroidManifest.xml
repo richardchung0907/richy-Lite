@@ -32,7 +32,7 @@
         android:requestLegacyExternalStorage="true"
         android:enableOnBackInvokedCallback="true">
 
-        <!-- Google AdMob Test App ID (replace with real ID in production) -->
+        <!-- TODO: REPLACE WITH PRODUCTION ANDROID APP ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
