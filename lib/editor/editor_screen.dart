@@ -195,8 +195,6 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                     }
 
                     if (bytes != null && mounted) {
-                      await AdManager.showInterstitial();
-                      
                       bool isDialogShowing = false;
                       if (mounted) {
                         _showLoading(context);
@@ -215,6 +213,9 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                           _lastSavedHistoryLength = editor.stateManager.stateHistory.length;
                         });
                         _showSuccessToast('✨ Photo saved to gallery!');
+                        Future.delayed(const Duration(milliseconds: 500), () {
+                          AdManager.showInterstitial();
+                        });
                       }
                     }
                     _isFinishing = false;
@@ -236,8 +237,6 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                     }
 
                     if (bytes != null && mounted) {
-                      await AdManager.showInterstitial();
-                      
                       bool isDialogShowing = false;
                       if (mounted) {
                         _showLoading(context);
@@ -249,6 +248,8 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                       if (mounted && isDialogShowing) {
                         Navigator.of(context).pop(); // hide loading
                       }
+                      
+                      AdManager.showInterstitial();
                     }
                     _isFinishing = false;
                   },
@@ -310,19 +311,29 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
       stickerEditor: const StickerEditorConfigs(),
     );
 
-    return ProImageEditor.file(
-      widget.imageFile,
-      configs: editorConfigs,
-      callbacks: ProImageEditorCallbacks(
-        onCloseEditor: (_) {
-          if (_isFinishing) return;
+    return Column(
+      children: [
+        Expanded(
+          child: ProImageEditor.file(
+            widget.imageFile,
+            configs: editorConfigs,
+            callbacks: ProImageEditorCallbacks(
+              onCloseEditor: (_) {
+                if (_isFinishing) return;
 
-          ErrorLogger.log('Editor closed by user');
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
-        },
-      ),
+                ErrorLogger.log('Editor closed by user');
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ),
+        ),
+        const SafeArea(
+          top: false,
+          child: AdBannerWidget(),
+        ),
+      ],
     );
   }
 }

@@ -19,12 +19,27 @@ class AdManager {
   static const String _productionAndroidUnitId = String.fromEnvironment('ADMOB_ANDROID_UNIT_ID');
   static const String _productionIOSUnitId = String.fromEnvironment('ADMOB_IOS_UNIT_ID');
 
+  // Banner Test IDs
+  static const String _fallbackAndroidBannerUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String _fallbackIOSBannerUnitId = 'ca-app-pub-3940256099942544/2934735716';
+
+  static const String _productionAndroidBannerUnitId = String.fromEnvironment('ADMOB_ANDROID_BANNER_UNIT_ID');
+  static const String _productionIOSBannerUnitId = String.fromEnvironment('ADMOB_IOS_BANNER_UNIT_ID');
+
   static String get _adUnitId {
     if (kDebugMode) {
       return Platform.isAndroid ? _fallbackAndroidUnitId : _fallbackIOSUnitId;
     }
     final prodId = Platform.isAndroid ? _productionAndroidUnitId : _productionIOSUnitId;
     return prodId.isNotEmpty ? prodId : (Platform.isAndroid ? _fallbackAndroidUnitId : _fallbackIOSUnitId);
+  }
+
+  static String get _bannerAdUnitId {
+    if (kDebugMode) {
+      return Platform.isAndroid ? _fallbackAndroidBannerUnitId : _fallbackIOSBannerUnitId;
+    }
+    final prodId = Platform.isAndroid ? _productionAndroidBannerUnitId : _productionIOSBannerUnitId;
+    return prodId.isNotEmpty ? prodId : (Platform.isAndroid ? _fallbackAndroidBannerUnitId : _fallbackIOSBannerUnitId);
   }
 
   static InterstitialAd? _interstitial;
@@ -58,10 +73,10 @@ class AdManager {
         }
       }
 
-      // Set COPPA & GDPR-K Configurations
+      // Remove COPPA & GDPR-K Configurations that force all users to be treated as children
       final requestConfiguration = RequestConfiguration(
-        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
-        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.unspecified,
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.unspecified,
       );
       await MobileAds.instance.updateRequestConfiguration(requestConfiguration);
 
@@ -192,5 +207,95 @@ class AdManager {
     _disposeAd();
     _dismissCompleter = null;
     _isLoading = false;
+  }
+}
+
+/// A wrapper widget that loads and displays a BannerAd.
+class AdBannerWidget extends StatefulWidget {
+  const AdBannerWidget({Key? key}) : super(key: key);
+
+  @override
+  State<AdBannerWidget> createState() => _AdBannerWidgetState();
+}
+
+class _AdBannerWidgetState extends State<AdBannerWidget> {
+  BannerAd? _bannerAd;
+  bool _isLoaded = false;
+  Orientation? _currentOrientation;
+  double? _currentWidth;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final orientation = MediaQuery.of(context).orientation;
+    final width = MediaQuery.of(context).size.width;
+
+    // Reload the ad if the orientation or width changes significantly.
+    if (_currentOrientation != orientation || _currentWidth != width) {
+      _currentOrientation = orientation;
+      _currentWidth = width;
+      _loadAd();
+    }
+  }
+
+  Future<void> _loadAd() async {
+    // Ensure we have consent before loading banner ads
+    await AdManager._consentCompleter.future;
+
+    if (!mounted) return;
+
+    final width = MediaQuery.of(context).size.width.truncate();
+    final size = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+
+    if (size == null || !mounted) {
+      return;
+    }
+
+    final oldBanner = _bannerAd;
+
+    _bannerAd = BannerAd(
+      adUnitId: AdManager._bannerAdUnitId,
+      size: size,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          debugPrint('BannerAd loaded.');
+          if (mounted) {
+            setState(() {
+              _isLoaded = true;
+            });
+          } else {
+            ad.dispose();
+          }
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          debugPrint('BannerAd failed to load: $error');
+          ad.dispose();
+          _bannerAd = null;
+        },
+      ),
+    );
+
+    await _bannerAd!.load();
+    oldBanner?.dispose();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_bannerAd != null && _isLoaded) {
+      return Container(
+        color: Colors.transparent,
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _bannerAd!),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }

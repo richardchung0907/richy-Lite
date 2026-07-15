@@ -178,11 +178,14 @@ class _HomeScreenState extends State<HomeScreen> {
         // ── Home content ─────────────────────────────────────
         Scaffold(
           body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const Spacer(flex: 2),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 2),
                   Text(
                     'home.title'.tr(),
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -254,9 +257,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: Text('home.open_gallery'.tr()),
                     ),
                   ),
-                  const Spacer(flex: 1),
-                ],
-              ),
+                        const Spacer(flex: 1),
+                      ],
+                    ),
+                  ),
+                ),
+                const AdBannerWidget(),
+              ],
             ),
           ),
         ),
