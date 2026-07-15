@@ -187,9 +187,17 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                     if (bytes != null && mounted) {
                       await AdManager.showInterstitial();
                       
-                      if (mounted) _showLoading(context);
+                      bool isDialogShowing = false;
+                      if (mounted) {
+                        _showLoading(context);
+                        isDialogShowing = true;
+                      }
+                      
                       final isSaved = await ShareService.saveImage(bytes);
-                      if (mounted) Navigator.of(context).pop();
+                      
+                      if (mounted && isDialogShowing) {
+                        Navigator.of(context).pop(); // hide loading
+                      }
 
                       if (isSaved && mounted) {
                         setState(() {
@@ -220,9 +228,17 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
                     if (bytes != null && mounted) {
                       await AdManager.showInterstitial();
                       
-                      if (mounted) _showLoading(context);
+                      bool isDialogShowing = false;
+                      if (mounted) {
+                        _showLoading(context);
+                        isDialogShowing = true;
+                      }
+                      
                       await ShareService.shareImage(bytes, context: context);
-                      if (mounted) Navigator.of(context).pop();
+                      
+                      if (mounted && isDialogShowing) {
+                        Navigator.of(context).pop(); // hide loading
+                      }
                     }
                     _isFinishing = false;
                   },
