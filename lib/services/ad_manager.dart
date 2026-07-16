@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
@@ -47,7 +48,6 @@ class AdManager {
   static Completer<bool>? _dismissCompleter;
   
   static final Completer<void> _consentCompleter = Completer<void>();
-  static DateTime? _lastAdShownTime;
 
   /// Initialize the Mobile Ads SDK. Call once in `main()`.
   /// Returns immediately, starting initialization in the background.
@@ -163,20 +163,11 @@ class AdManager {
   static Future<bool> showInterstitial() async {
     await _consentCompleter.future;
 
-    // Frequency capping: 3-minute minimum delay
-    if (_lastAdShownTime != null) {
-      final diff = DateTime.now().difference(_lastAdShownTime!);
-      if (diff.inMinutes < 3) {
-        return false;
-      }
-    }
-
     if (_interstitial == null) {
       loadInterstitial();
       return false;
     }
 
-    _lastAdShownTime = DateTime.now();
     _dismissCompleter = Completer<bool>();
 
     try {
