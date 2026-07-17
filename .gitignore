@@ -62,3 +62,5 @@ certificates.p12
 distribution.cer
 distribution.pem
 base64_p12.txt
+*.p8
+keys.txt
