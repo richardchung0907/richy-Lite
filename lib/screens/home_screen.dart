@@ -4,10 +4,10 @@ import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../editor/editor_screen.dart';
 import '../services/ad_manager.dart';
-import '../services/share_service.dart';
 import '../utils/error_logger.dart';
 
 /// Home screen — the entry point for RICHY Lite.
@@ -33,63 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     AdManager.loadInterstitial();
   }
 
-  /// Show a top-positioned toast that overlays everything
-  /// (including any bottom share sheet that may be open).
-  void _showSuccessToast(String message) {
-    if (!mounted) return;
 
-    final overlay = Overlay.of(context);
-    late OverlayEntry overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (_) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
-        left: 24,
-        right: 24,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6395A),
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(38),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded,
-                    color: Colors.white, size: 22),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(overlayEntry);
-
-    Future.delayed(const Duration(milliseconds: 3500), () {
-      if (overlayEntry.mounted) overlayEntry.remove();
-    });
-  }
 
   Future<void> _pickFromCamera() async {
     // ── Set loading BEFORE camera opens ───────────────────────
@@ -106,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (photo != null) {
         await ErrorLogger.log('Photo captured from camera: ${photo.path}');
         if (mounted) {
-          final Uint8List? editedBytes = await Navigator.of(context).push<Uint8List>(
+          await Navigator.of(context).push<Uint8List>(
             MaterialPageRoute(
               builder: (_) => RichyEditorScreen(imageFile: File(photo.path)),
             ),
@@ -145,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (image != null) {
         await ErrorLogger.log('Image picked from gallery: ${image.path}');
         if (mounted) {
-          final Uint8List? editedBytes = await Navigator.of(context).push<Uint8List>(
+          await Navigator.of(context).push<Uint8List>(
             MaterialPageRoute(
               builder: (_) => RichyEditorScreen(imageFile: File(image.path)),
             ),
@@ -180,6 +124,44 @@ class _HomeScreenState extends State<HomeScreen> {
           body: SafeArea(
             child: Column(
               children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0, right: 8.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.info_outline, color: Colors.grey),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Privacy Policy'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('RICHY Lite values your privacy. We use device identifiers solely to deliver relevant advertisements.'),
+                                const SizedBox(height: 16),
+                                InkWell(
+                                  onTap: () => launchUrl(Uri.parse('https://richylite.com/privacy')),
+                                  child: const Text(
+                                    'https://richylite.com/privacy',
+                                    style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),

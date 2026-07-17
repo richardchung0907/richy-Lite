@@ -3,7 +3,6 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 /// Manages Google AdMob Interstitial ads for RICHY Lite.
 ///
@@ -65,12 +64,10 @@ class AdManager {
         },
       );
 
-      // Step 2: Request ATT on iOS
-      if (Platform.isIOS) {
-        final status = await AppTrackingTransparency.trackingAuthorizationStatus;
-        if (status == TrackingStatus.notDetermined) {
-          await AppTrackingTransparency.requestTrackingAuthorization();
-        }
+      final canRequest = await ConsentInformation.instance.canRequestAds();
+      if (!canRequest) {
+        debugPrint('Cannot request ads due to lack of consent.');
+        return;
       }
 
       // Remove COPPA & GDPR-K Configurations that force all users to be treated as children
@@ -122,6 +119,9 @@ class AdManager {
   /// Preload an interstitial ad.
   static Future<void> loadInterstitial() async {
     await _consentCompleter.future;
+
+    final canRequest = await ConsentInformation.instance.canRequestAds();
+    if (!canRequest) return;
 
     if (_isLoading || _interstitial != null) return;
 
@@ -203,7 +203,7 @@ class AdManager {
 
 /// A wrapper widget that loads and displays a BannerAd.
 class AdBannerWidget extends StatefulWidget {
-  const AdBannerWidget({Key? key}) : super(key: key);
+  const AdBannerWidget({super.key});
 
   @override
   State<AdBannerWidget> createState() => _AdBannerWidgetState();
@@ -233,10 +233,13 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     // Ensure we have consent before loading banner ads
     await AdManager._consentCompleter.future;
 
+    final canRequest = await ConsentInformation.instance.canRequestAds();
+    if (!canRequest) return;
+
     if (!mounted) return;
 
     final width = MediaQuery.of(context).size.width.truncate();
-    final size = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+    final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
 
     if (size == null || !mounted) {
       return;

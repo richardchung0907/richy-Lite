@@ -19,6 +19,15 @@ class ShareService {
   /// Returns `true` if gallery save succeeded.
   static Future<bool> saveImage(Uint8List bytes) async {
     try {
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        final requestGranted = await Gal.requestAccess();
+        if (!requestGranted) {
+          debugPrint('Gallery access denied by user.');
+          return false;
+        }
+      }
+
       await Gal.putImageBytes(bytes);
       return true;
     } catch (_) {
@@ -42,7 +51,7 @@ class ShareService {
       await file.writeAsBytes(bytes);
 
       Rect? anchor;
-      if (context != null) {
+      if (context != null && context.mounted) {
         try {
           final box = context.findRenderObject() as RenderBox?;
           if (box != null && box.hasSize) {
