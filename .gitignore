@@ -46,3 +46,11 @@ build_logs/
 run_recordings/
 chat_export_*.md
 %USERPROFILE%/
+
+# Local testing and development files
+*.py
+!build_android.py
+!build_ios.py
+test_*.jpg
+photo_result/
+expected_filters/
