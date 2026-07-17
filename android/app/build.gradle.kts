@@ -13,6 +13,8 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val envAdmobId = System.getenv("ADMOB_ANDROID_APP_ID")?.takeIf { it.isNotBlank() } ?: "ca-app-pub-3940256099942544~3347511713"
+
 android {
     namespace = "com.richylite.richyLite"
     compileSdk = flutter.compileSdkVersion
@@ -32,6 +34,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] = envAdmobId
     }
 
     signingConfigs {
