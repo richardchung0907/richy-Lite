@@ -16,7 +16,9 @@ __pycache__/
 # iOS & Android
 ios/Pods/
 ios/.symlinks/
-ios/Flutter/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
 ios/Runner/GeneratedPluginRegistrant.*
 android/.gradle/
 android/app/build/
