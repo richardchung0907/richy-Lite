@@ -26,6 +26,11 @@ jobs:
         run: |
           plutil -replace GADApplicationIdentifier -string "${{ secrets.ADMOB_IOS_APP_ID }}" ios/Runner/Info.plist
 
+      - name: Configure signing in ExportOptions.plist
+        run: |
+          plutil -replace signingStyle -string "manual" ios/Runner/ExportOptions.plist
+          plutil -insert provisioningProfiles -xml "<dict><key>com.richylite.richyLite</key><string>${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}</string></dict>" ios/Runner/ExportOptions.plist
+
       - name: Setup provisioning profile & certificates
         env:
           CERTIFICATE_BASE64: ${{ secrets.IOS_BUILD_CERTIFICATE_BASE64 }}
@@ -60,3 +65,25 @@ jobs:
           flutter build ipa --release --export-options-plist=ios/Runner/ExportOptions.plist \
             --dart-define=ADMOB_IOS_UNIT_ID=${{ secrets.ADMOB_IOS_UNIT_ID }} \
             --dart-define=ADMOB_IOS_BANNER_UNIT_ID=${{ secrets.ADMOB_IOS_BANNER_UNIT_ID }}
+
+      - name: Locate IPA File
+        run: |
+          IPA_PATH=$(find build/ios/ipa -name "*.ipa" -print -quit)
+          echo "IPA_PATH=$IPA_PATH" >> $GITHUB_ENV
+          echo "Found IPA at: $IPA_PATH"
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-release
+          path: ${{ env.IPA_PATH }}
+          if-no-files-found: error
+
+      - name: Upload to TestFlight
+        if: ${{ secrets.APPSTORE_ISSUER_ID != '' && secrets.APPSTORE_KEY_ID != '' && secrets.APPSTORE_PRIVATE_KEY_BASE64 != '' }}
+        uses: Apple-Actions/upload-testflight-build@v1
+        with:
+          app-path: ${{ env.IPA_PATH }}
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-key-base64: ${{ secrets.APPSTORE_PRIVATE_KEY_BASE64 }}

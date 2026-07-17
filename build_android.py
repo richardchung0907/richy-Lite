@@ -449,11 +449,31 @@ def flutter_analyze() -> bool:
 
 
 def build_apk(release: bool = False) -> str | None:
-    """Build APK (debug or release)."""
+    """Build APK (and also App Bundle if release)."""
     mode = "release" if release else "debug"
-    log(f"── Building {mode} APK ──")
-
     flutter = find_executable("flutter")
+
+    if release:
+        log(f"── Building {mode} Android App Bundle (AAB) ──")
+        aab_cmd = [flutter, "build", "appbundle", "--release"]
+        try:
+            aab_result = run(aab_cmd, timeout=600)
+            if aab_result.returncode == 0:
+                aab_dir = os.path.join(
+                    PROJECT_DIR, "build", "app", "outputs", "bundle", "release"
+                )
+                aab_path = os.path.join(aab_dir, "app-release.aab")
+                if os.path.isfile(aab_path):
+                    size_mb = os.path.getsize(aab_path) / (1024 * 1024)
+                    log(f"  ✓ AAB (For Google Play): {aab_path} ({size_mb:.1f} MB)")
+                else:
+                    log("  ⚠ AAB was built but could not be located directly.")
+            else:
+                log_error("AAB build failed, continuing to APK...")
+        except Exception as e:
+            log_error("AAB build exception", e)
+
+    log(f"── Building {mode} APK ──")
     cmd = [flutter, "build", "apk"]
     if release:
         cmd.append("--release")
@@ -470,7 +490,7 @@ def build_apk(release: bool = False) -> str | None:
             apk_path = os.path.join(build_dir, apk_name)
             if os.path.isfile(apk_path):
                 size_mb = os.path.getsize(apk_path) / (1024 * 1024)
-                log(f"  ✓ APK: {apk_path} ({size_mb:.1f} MB)")
+                log(f"  ✓ APK (For local test): {apk_path} ({size_mb:.1f} MB)")
                 return apk_path
             else:
                 # Try to find it
