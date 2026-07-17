@@ -142,9 +142,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Text('RICHY Lite values your privacy. We use device identifiers solely to deliver relevant advertisements.'),
                                 const SizedBox(height: 16),
                                 InkWell(
-                                  onTap: () => launchUrl(Uri.parse('https://richylite.com/privacy')),
+                                  onTap: () => launchUrl(Uri.parse('https://richardchung0907.github.io/richy-Lite/')),
                                   child: const Text(
-                                    'https://richylite.com/privacy',
+                                    'https://richardchung0907.github.io/richy-Lite/',
                                     style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
                                   ),
                                 ),
