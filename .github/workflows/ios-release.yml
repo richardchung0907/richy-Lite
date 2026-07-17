@@ -63,6 +63,7 @@ jobs:
       - name: Build iOS IPA
         run: |
           flutter build ipa --release --export-options-plist=ios/Runner/ExportOptions.plist \
+            --build-number=${{ github.run_number }} \
             --dart-define=ADMOB_IOS_UNIT_ID=${{ secrets.ADMOB_IOS_UNIT_ID }} \
             --dart-define=ADMOB_IOS_BANNER_UNIT_ID=${{ secrets.ADMOB_IOS_BANNER_UNIT_ID }}
 
