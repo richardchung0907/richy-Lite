@@ -65,16 +65,19 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
           
+      - name: Configure Manual Code Signing in xcconfig
+        run: |
+          echo "CODE_SIGN_STYLE=Manual" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGN_IDENTITY=Apple Distribution" >> ios/Flutter/Release.xcconfig
+          echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}" >> ios/Flutter/Release.xcconfig
+          echo "DEVELOPMENT_TEAM=3W8574PF9N" >> ios/Flutter/Release.xcconfig
+
       - name: Build iOS IPA
         run: |
           flutter build ipa --release --export-options-plist=ios/Runner/ExportOptions.plist \
             --build-number=${{ github.run_number }} \
             --dart-define=ADMOB_IOS_UNIT_ID=${{ secrets.ADMOB_IOS_UNIT_ID }} \
-            --dart-define=ADMOB_IOS_BANNER_UNIT_ID=${{ secrets.ADMOB_IOS_BANNER_UNIT_ID }} \
-            -- CODE_SIGN_STYLE=Manual \
-               CODE_SIGN_IDENTITY="Apple Distribution" \
-               PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}" \
-               DEVELOPMENT_TEAM=3W8574PF9N
+            --dart-define=ADMOB_IOS_BANNER_UNIT_ID=${{ secrets.ADMOB_IOS_BANNER_UNIT_ID }}
 
       - name: Locate IPA File
         run: |
