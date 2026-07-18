@@ -65,4 +65,6 @@ distribution.cer
 distribution.pem
 base64_p12.txt
 *.p8
+*.p12
+*.mobileprovision
 keys.txt
