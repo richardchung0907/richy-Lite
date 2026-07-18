@@ -96,11 +96,11 @@ jobs:
         env:
           ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
-          PRIVATE_KEY_BASE64: ${{ secrets.APPSTORE_PRIVATE_KEY_BASE64 }}
-        if: ${{ env.ISSUER_ID != '' && env.KEY_ID != '' && env.PRIVATE_KEY_BASE64 != '' }}
+          PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+        if: ${{ env.ISSUER_ID != '' && env.KEY_ID != '' && env.PRIVATE_KEY != '' }}
         uses: Apple-Actions/upload-testflight-build@v1
         with:
           app-path: ${{ env.IPA_PATH }}
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
-          api-key-base64: ${{ secrets.APPSTORE_PRIVATE_KEY_BASE64 }}
+          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
