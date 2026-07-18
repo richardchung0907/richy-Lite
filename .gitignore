@@ -68,3 +68,8 @@ base64_p12.txt
 *.p12
 *.mobileprovision
 keys.txt
+
+# Agent and tool configurations
+.codewhale/
+AGENTS.md
+.agents/
