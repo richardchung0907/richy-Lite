@@ -1,0 +1,79 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Android Release APK and AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Setup Keystore and key.properties
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          # Recreate keystore binary from base64 secret
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+            echo "✓ Recreated upload-keystore.jks from secrets."
+          else
+            echo "⚠ ANDROID_KEYSTORE_BASE64 secret is not set!"
+          fi
+
+          # Recreate key.properties file from secret
+          if [ -n "$ANDROID_KEY_PROPERTIES" ]; then
+            echo "$ANDROID_KEY_PROPERTIES" > android/key.properties
+            echo "✓ Recreated key.properties from secrets."
+          else
+            echo "⚠ ANDROID_KEY_PROPERTIES secret is not set!"
+          fi
+
+      - name: Build Android APK
+        env:
+          ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
+        run: |
+          flutter build apk --release \
+            --build-number=${{ github.run_number }}
+
+      - name: Build Android App Bundle (AAB)
+        env:
+          ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
+        run: |
+          flutter build appbundle --release \
+            --build-number=${{ github.run_number }}
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload AAB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab-release
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
