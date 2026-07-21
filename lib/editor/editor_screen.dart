@@ -41,6 +41,20 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
   /// redo history, they still get a warning before losing that redo history.
   int _lastSavedHistoryLength = 1;
 
+  @override
+  void initState() {
+    super.initState();
+    // Configure the global banner's background color to dark black to match the editor's theme
+    AdManager.bannerBackgroundColorNotifier.value = const Color(0xFF1E1E1E);
+  }
+
+  @override
+  void dispose() {
+    // Restore the global banner's background color back to transparent when leaving the editor
+    AdManager.bannerBackgroundColorNotifier.value = Colors.transparent;
+    super.dispose();
+  }
+
   void _showSuccessToast(String message) {
     if (!mounted) return;
 

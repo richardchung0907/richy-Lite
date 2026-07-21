@@ -27,6 +27,9 @@ class AdManager {
   /// After the interstitial closes, we set it back to `true` to build a completely clean platform view.
   static final ValueNotifier<bool> isBannerVisibleNotifier = ValueNotifier<bool>(true);
 
+  /// Notifier to manage banner background color globally based on the current screen's theme.
+  static final ValueNotifier<Color> bannerBackgroundColorNotifier = ValueNotifier<Color>(Colors.transparent);
+
   /// Helper counter to force a unique key on every recreation.
   static int _bannerRebuildCount = 0;
 
@@ -197,26 +200,15 @@ class AdManager {
   }
 }
 
-/// A wrapper widget that displays an AppodealBanner.
-///
-/// Listens to [AdManager.isBannerVisibleNotifier] and checks if its own enclosing route is active via [ModalRoute.isCurrent].
-///
-/// Under Appodeal's single-active-banner constraint, having multiple screens containing a banner (Home and Editor)
-/// concurrently in the navigation stack causes background screens to lose native ad binding.
-///
-/// By checking [ModalRoute.isCurrent], the background screens automatically collapse their banner view into [SizedBox.shrink()],
-/// disposing of the native platform view. When returning to the screen (e.g. popping Editor to return to Home),
-/// the route's status changes back to current, automatically triggering a rebuild to construct a brand new native platform view
-/// with a unique key based on the route's hashCode and global count, seamlessly grabbing the active banner binding.
 /// A wrapper widget that displays an AppodealBanner as a single global instance.
 ///
 /// Listens to [AdManager.isBannerVisibleNotifier] and automatically collapses
 /// when hidden (e.g. during an interstitial ad overlay) or when the keyboard is open.
 ///
-/// By placing this at the root of the app in the [MaterialApp.builder], we ensure
-/// that the native platform view is instantiated exactly ONCE and is never destroyed
-/// or recreated during screen-to-screen transitions. This completely avoids all
-/// page-transition race conditions and rendering glitches on slower GPUs and physical devices.
+/// Additionally, dynamically computes the safe ad height using the device pixel ratio (DPR)
+/// to avoid fractional subpixel clipping that would trigger the ad SDK's visibility monitor
+/// to hide the ad. It also listens to [AdManager.bannerBackgroundColorNotifier] to seamlessly
+/// style the background color based on the current screen's dark/light layout theme.
 class AdBannerWidget extends StatelessWidget {
   const AdBannerWidget({super.key});
 
@@ -232,15 +224,31 @@ class AdBannerWidget extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return Container(
-          alignment: Alignment.center,
-          color: Colors.transparent,
-          height: 50,
-          child: const AppodealBanner(
-            key: ValueKey('global_appodeal_banner_view'),
-            adSize: AppodealBannerSize.BANNER,
-            placement: 'default',
-          ),
+        // Dynamically compute the safe layout height using the physical pixel conversion.
+        // On fractional-pixel devices like Samsung Galaxy A5 (2.625 DPR), a hardcoded height of 50
+        // maps to 131.25 physical pixels, which is truncated to 131 physical pixels by Flutter.
+        // But the Appodeal/Google Mobile Ads SDK requires exactly 50dp * 2.625 = 131.25 physical pixels.
+        // Since 131 < 131.25, the SDK's visibility monitor detects that the ad is clipped/obscured,
+        // making the ad invisible/transparent within <1 second (while remaining active and clickable).
+        // By rounding up to the next physical pixel and adding a 2-physical-pixel safe buffer,
+        // we guarantee that the ad view is never clipped on any device, fully resolving the bug.
+        final dpr = MediaQuery.of(context).devicePixelRatio;
+        final double adHeight = ((50.0 * dpr).ceil() + 2) / dpr;
+
+        return ValueListenableBuilder<Color>(
+          valueListenable: AdManager.bannerBackgroundColorNotifier,
+          builder: (context, bgColor, child) {
+            return Container(
+              alignment: Alignment.center,
+              color: bgColor,
+              height: adHeight,
+              child: const AppodealBanner(
+                key: ValueKey('global_appodeal_banner_view'),
+                adSize: AppodealBannerSize.BANNER,
+                placement: 'default',
+              ),
+            );
+          },
         );
       },
     );
