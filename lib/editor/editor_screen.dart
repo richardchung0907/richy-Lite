@@ -329,10 +329,6 @@ class _RichyEditorScreenState extends State<RichyEditorScreen> {
             ),
           ),
         ),
-        const SafeArea(
-          top: false,
-          child: AdBannerWidget(),
-        ),
       ],
     );
   }

@@ -52,6 +52,20 @@ class RichyApp extends StatelessWidget {
       locale: context.locale,
 
       home: const HomeScreen(),
+      builder: (context, child) {
+        return Scaffold(
+          resizeToAvoidBottomInset: false, // Prevents keyboard from pushing up the banner
+          body: Column(
+            children: [
+              Expanded(child: child ?? const SizedBox.shrink()),
+              const SafeArea(
+                top: false,
+                child: AdBannerWidget(),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

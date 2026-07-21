@@ -208,71 +208,36 @@ class AdManager {
 /// disposing of the native platform view. When returning to the screen (e.g. popping Editor to return to Home),
 /// the route's status changes back to current, automatically triggering a rebuild to construct a brand new native platform view
 /// with a unique key based on the route's hashCode and global count, seamlessly grabbing the active banner binding.
-class AdBannerWidget extends StatefulWidget {
+/// A wrapper widget that displays an AppodealBanner as a single global instance.
+///
+/// Listens to [AdManager.isBannerVisibleNotifier] and automatically collapses
+/// when hidden (e.g. during an interstitial ad overlay) or when the keyboard is open.
+///
+/// By placing this at the root of the app in the [MaterialApp.builder], we ensure
+/// that the native platform view is instantiated exactly ONCE and is never destroyed
+/// or recreated during screen-to-screen transitions. This completely avoids all
+/// page-transition race conditions and rendering glitches on slower GPUs and physical devices.
+class AdBannerWidget extends StatelessWidget {
   const AdBannerWidget({super.key});
 
   @override
-  State<AdBannerWidget> createState() => _AdBannerWidgetState();
-}
-
-class _AdBannerWidgetState extends State<AdBannerWidget> {
-  bool _isRouteCurrent = false;
-  bool _shouldRenderAd = false;
-  Timer? _delayTimer;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final isCurrent = ModalRoute.of(context)?.isCurrent ?? true;
-    if (isCurrent != _isRouteCurrent) {
-      _isRouteCurrent = isCurrent;
-      _delayTimer?.cancel();
-      if (_isRouteCurrent) {
-        _shouldRenderAd = false;
-        // Introduce a small delay (500ms) to ensure any previous screen's banner
-        // has been fully disposed before we start building the new one.
-        _delayTimer = Timer(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            setState(() {
-              _shouldRenderAd = true;
-            });
-          }
-        });
-      } else {
-        _shouldRenderAd = false;
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _delayTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Automatically hide the banner when the virtual keyboard is open to preserve vertical screen space.
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return ValueListenableBuilder<bool>(
       valueListenable: AdManager.isBannerVisibleNotifier,
       builder: (context, isVisible, child) {
-        // If the route is inactive or we are waiting for the cooldown delay,
-        // or the banner is explicitly hidden (e.g., during interstitial)
-        if (!_isRouteCurrent || !_shouldRenderAd || !isVisible) {
-          if (!_isRouteCurrent) {
-            return const SizedBox.shrink();
-          }
-          // Preserve space of 50dp to prevent layout shifting during transition
-          return const SizedBox(height: 50);
+        if (!isVisible || isKeyboardOpen) {
+          return const SizedBox.shrink();
         }
-        
-        final routeHash = ModalRoute.of(context)?.hashCode ?? 0;
 
         return Container(
           alignment: Alignment.center,
           color: Colors.transparent,
           height: 50,
-          child: AppodealBanner(
-            key: ValueKey('appodeal_banner_${routeHash}_${AdManager._bannerRebuildCount}'),
+          child: const AppodealBanner(
+            key: ValueKey('global_appodeal_banner_view'),
             adSize: AppodealBannerSize.BANNER,
             placement: 'default',
           ),
