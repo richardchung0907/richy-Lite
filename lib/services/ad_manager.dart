@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
 
@@ -200,25 +199,80 @@ class AdManager {
 
 /// A wrapper widget that displays an AppodealBanner.
 ///
-/// Listens to [AdManager.isBannerVisibleNotifier].
-/// When `false`, returns an empty widget to dispose of the platform view.
-/// When `true`, instantiates a completely clean `AppodealBanner` with a unique key.
-class AdBannerWidget extends StatelessWidget {
+/// Listens to [AdManager.isBannerVisibleNotifier] and checks if its own enclosing route is active via [ModalRoute.isCurrent].
+///
+/// Under Appodeal's single-active-banner constraint, having multiple screens containing a banner (Home and Editor)
+/// concurrently in the navigation stack causes background screens to lose native ad binding.
+///
+/// By checking [ModalRoute.isCurrent], the background screens automatically collapse their banner view into [SizedBox.shrink()],
+/// disposing of the native platform view. When returning to the screen (e.g. popping Editor to return to Home),
+/// the route's status changes back to current, automatically triggering a rebuild to construct a brand new native platform view
+/// with a unique key based on the route's hashCode and global count, seamlessly grabbing the active banner binding.
+class AdBannerWidget extends StatefulWidget {
   const AdBannerWidget({super.key});
+
+  @override
+  State<AdBannerWidget> createState() => _AdBannerWidgetState();
+}
+
+class _AdBannerWidgetState extends State<AdBannerWidget> {
+  bool _isRouteCurrent = false;
+  bool _shouldRenderAd = false;
+  Timer? _delayTimer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+    if (isCurrent != _isRouteCurrent) {
+      _isRouteCurrent = isCurrent;
+      _delayTimer?.cancel();
+      if (_isRouteCurrent) {
+        _shouldRenderAd = false;
+        // Introduce a small delay (500ms) to ensure any previous screen's banner
+        // has been fully disposed before we start building the new one.
+        _delayTimer = Timer(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            setState(() {
+              _shouldRenderAd = true;
+            });
+          }
+        });
+      } else {
+        _shouldRenderAd = false;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: AdManager.isBannerVisibleNotifier,
       builder: (context, isVisible, child) {
-        if (!isVisible) {
-          return const SizedBox.shrink();
+        // If the route is inactive or we are waiting for the cooldown delay,
+        // or the banner is explicitly hidden (e.g., during interstitial)
+        if (!_isRouteCurrent || !_shouldRenderAd || !isVisible) {
+          if (!_isRouteCurrent) {
+            return const SizedBox.shrink();
+          }
+          // Preserve space of 50dp to prevent layout shifting during transition
+          return const SizedBox(height: 50);
         }
+        
+        final routeHash = ModalRoute.of(context)?.hashCode ?? 0;
+
         return Container(
           alignment: Alignment.center,
           color: Colors.transparent,
+          height: 50,
           child: AppodealBanner(
-            key: ValueKey('appodeal_banner_${AdManager._bannerRebuildCount}'),
+            key: ValueKey('appodeal_banner_${routeHash}_${AdManager._bannerRebuildCount}'),
             adSize: AppodealBannerSize.BANNER,
             placement: 'default',
           ),
