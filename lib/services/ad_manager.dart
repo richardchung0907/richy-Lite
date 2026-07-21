@@ -23,8 +23,13 @@ class AdManager {
   
   static final Completer<void> _initCompleter = Completer<void>();
 
-  /// Notifier to trigger banner widget rebuilds when a full-screen event closes or dismisses.
-  static final ValueNotifier<int> bannerRebuildNotifier = ValueNotifier<int>(0);
+  /// Notifier to manage banner visibility.
+  /// When an interstitial is showing, we set this to `false` to completely tear down the banner platform view.
+  /// After the interstitial closes, we set it back to `true` to build a completely clean platform view.
+  static final ValueNotifier<bool> isBannerVisibleNotifier = ValueNotifier<bool>(true);
+
+  /// Helper counter to force a unique key on every recreation.
+  static int _bannerRebuildCount = 0;
 
   /// Initialize the Appodeal Ads SDK. Call once in `main()`.
   /// Returns immediately, starting initialization in the background.
@@ -37,7 +42,6 @@ class AdManager {
       debugPrint('Appodeal: Initializing SDK...');
       
       // Step 1: Set testing mode (Test ads)
-      // Pass true to enable test mode, false to disable it
       await Appodeal.setTesting(true);
 
       // Disable auto caching for Interstitials to give us manual caching control
@@ -96,8 +100,7 @@ class AdManager {
       onInterstitialShowFailed: () {
         debugPrint('Appodeal Interstitial show failed');
         _completeDismiss(false);
-        // Force recreation of banners after full screen overlay closes/fails
-        bannerRebuildNotifier.value++;
+        _triggerBannerRecovery();
         loadInterstitial(); // Reload in background
       },
       onInterstitialClicked: () {
@@ -106,8 +109,7 @@ class AdManager {
       onInterstitialClosed: () {
         debugPrint('Appodeal Interstitial closed by user');
         _completeDismiss(true);
-        // Force recreation of banners after full screen overlay closes/fails
-        bannerRebuildNotifier.value++;
+        _triggerBannerRecovery();
         loadInterstitial(); // Reload in background
       },
       onInterstitialExpired: () {
@@ -115,6 +117,17 @@ class AdManager {
         loadInterstitial(); // Reload in background
       },
     );
+  }
+
+  /// Restores the banner after a small delay to ensure native Activity transitions complete.
+  static void _triggerBannerRecovery() {
+    // Small delay (e.g. 200ms) to let the Android full-screen interstitial Activity completely exit
+    // and restore the main Flutter Activity focus.
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _bannerRebuildCount++;
+      isBannerVisibleNotifier.value = true;
+      debugPrint('Appodeal: Re-enabled banner visibility with key index: $_bannerRebuildCount');
+    });
   }
 
   /// Preload an interstitial ad.
@@ -153,6 +166,10 @@ class AdManager {
       return false;
     }
 
+    // Hide and dispose the banner platform view immediately before displaying interstitial
+    isBannerVisibleNotifier.value = false;
+    debugPrint('Appodeal: Hid banner in preparation for interstitial overlay.');
+
     _dismissCompleter = Completer<bool>();
 
     try {
@@ -161,6 +178,7 @@ class AdManager {
     } catch (e) {
       debugPrint('Appodeal show error: $e');
       _completeDismiss(false);
+      _triggerBannerRecovery();
       loadInterstitial();
       return false;
     }
@@ -182,22 +200,25 @@ class AdManager {
 
 /// A wrapper widget that displays an AppodealBanner.
 ///
-/// Listens to [AdManager.bannerRebuildNotifier] to automatically recreate the platform view
-/// with a unique key whenever full-screen interstitial ads close or fail to show.
-/// This prevents the native banner platform view from disappearing after overlay events.
+/// Listens to [AdManager.isBannerVisibleNotifier].
+/// When `false`, returns an empty widget to dispose of the platform view.
+/// When `true`, instantiates a completely clean `AppodealBanner` with a unique key.
 class AdBannerWidget extends StatelessWidget {
   const AdBannerWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: AdManager.bannerRebuildNotifier,
-      builder: (context, value, child) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdManager.isBannerVisibleNotifier,
+      builder: (context, isVisible, child) {
+        if (!isVisible) {
+          return const SizedBox.shrink();
+        }
         return Container(
           alignment: Alignment.center,
           color: Colors.transparent,
           child: AppodealBanner(
-            key: ValueKey('appodeal_banner_$value'),
+            key: ValueKey('appodeal_banner_${AdManager._bannerRebuildCount}'),
             adSize: AppodealBannerSize.BANNER,
             placement: 'default',
           ),
