@@ -30,7 +30,7 @@ android {
         applicationId = "com.richylite.richyLite"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -63,4 +63,12 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.appodeal.ads.sdk:core:4.2.0")
+    implementation("com.appodeal.ads.sdk.adapters:admob:24.7.0.0")
+    implementation("com.appodeal.ads.sdk.adapters:applovin:13.5.1.0")
+    implementation("com.appodeal.ads.sdk.adapters:ironsource:9.1.0.0")
+    implementation("com.appodeal.ads.sdk.adapters:unity_ads:4.17.0.0")
 }

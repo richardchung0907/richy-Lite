@@ -2,53 +2,28 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
 
-/// Manages Google AdMob Interstitial ads for RICHY Lite.
+/// Manages Appodeal Interstitial and Banner ads for RICHY Lite.
 ///
-/// Uses Google's official **test ad IDs** during development
+/// Uses Appodeal's official SDK with test mode enabled during development
 /// to prevent account suspension.
 class AdManager {
   AdManager._();
 
-  // TODO: REPLACE WITH PRODUCTION UNIT ID
-  static const String _fallbackAndroidUnitId = 'ca-app-pub-3940256099942544/1033173712';
-  // TODO: REPLACE WITH PRODUCTION UNIT ID
-  static const String _fallbackIOSUnitId = 'ca-app-pub-3940256099942544/4411468910';
+  static const String _androidAppKey = '1e61cf1304d32d47bbbe6c7f6f230eb445645aca570c8414';
+  static const String _iosAppKey = ''; // No iOS key in keys.txt for now
 
-  static const String _productionAndroidUnitId = String.fromEnvironment('ADMOB_ANDROID_UNIT_ID');
-  static const String _productionIOSUnitId = String.fromEnvironment('ADMOB_IOS_UNIT_ID');
-
-  // Banner Test IDs
-  static const String _fallbackAndroidBannerUnitId = 'ca-app-pub-3940256099942544/6300978111';
-  static const String _fallbackIOSBannerUnitId = 'ca-app-pub-3940256099942544/2934735716';
-
-  static const String _productionAndroidBannerUnitId = String.fromEnvironment('ADMOB_ANDROID_BANNER_UNIT_ID');
-  static const String _productionIOSBannerUnitId = String.fromEnvironment('ADMOB_IOS_BANNER_UNIT_ID');
-
-  static String get _adUnitId {
-    if (kDebugMode) {
-      return Platform.isAndroid ? _fallbackAndroidUnitId : _fallbackIOSUnitId;
-    }
-    final prodId = Platform.isAndroid ? _productionAndroidUnitId : _productionIOSUnitId;
-    return prodId.isNotEmpty ? prodId : (Platform.isAndroid ? _fallbackAndroidUnitId : _fallbackIOSUnitId);
+  static String get _appKey {
+    return Platform.isAndroid ? _androidAppKey : _iosAppKey;
   }
 
-  static String get _bannerAdUnitId {
-    if (kDebugMode) {
-      return Platform.isAndroid ? _fallbackAndroidBannerUnitId : _fallbackIOSBannerUnitId;
-    }
-    final prodId = Platform.isAndroid ? _productionAndroidBannerUnitId : _productionIOSBannerUnitId;
-    return prodId.isNotEmpty ? prodId : (Platform.isAndroid ? _fallbackAndroidBannerUnitId : _fallbackIOSBannerUnitId);
-  }
-
-  static InterstitialAd? _interstitial;
   static bool _isLoading = false;
   static Completer<bool>? _dismissCompleter;
   
-  static final Completer<void> _consentCompleter = Completer<void>();
+  static final Completer<void> _initCompleter = Completer<void>();
 
-  /// Initialize the Mobile Ads SDK. Call once in `main()`.
+  /// Initialize the Appodeal Ads SDK. Call once in `main()`.
   /// Returns immediately, starting initialization in the background.
   static Future<void> init() async {
     _initializeAsync();
@@ -56,134 +31,132 @@ class AdManager {
 
   static Future<void> _initializeAsync() async {
     try {
-      // Step 1: UMP Consent Flow with 5-second timeout
-      await _requestConsent().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          debugPrint('UMP Consent request timed out.');
-        },
-      );
+      debugPrint('Appodeal: Initializing SDK...');
+      
+      // Step 1: Set testing mode (Test ads)
+      // Pass true to enable test mode, false to disable it
+      await Appodeal.setTesting(true);
 
-      final canRequest = await ConsentInformation.instance.canRequestAds();
-      if (!canRequest) {
-        debugPrint('Cannot request ads due to lack of consent.');
+      // Disable auto caching for Interstitials to give us manual caching control
+      await Appodeal.setAutoCache(AppodealAdType.Interstitial, false);
+
+      // Step 2: Initialize Appodeal SDK
+      final key = _appKey;
+      if (key.isEmpty) {
+        debugPrint('Appodeal: No App Key defined for this platform.');
+        if (!_initCompleter.isCompleted) {
+          _initCompleter.complete();
+        }
         return;
       }
 
-      // Remove COPPA & GDPR-K Configurations that force all users to be treated as children
-      final requestConfiguration = RequestConfiguration(
-        tagForChildDirectedTreatment: TagForChildDirectedTreatment.unspecified,
-        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.unspecified,
+      await Appodeal.initialize(
+        appKey: key,
+        adTypes: [
+          AppodealAdType.Interstitial,
+          AppodealAdType.Banner,
+        ],
+        onInitializationFinished: (errors) {
+          if (errors != null && errors.isNotEmpty) {
+            debugPrint('Appodeal initialization finished with errors: $errors');
+          } else {
+            debugPrint('Appodeal initialization finished successfully!');
+          }
+        },
       );
-      await MobileAds.instance.updateRequestConfiguration(requestConfiguration);
 
-      // Step 3: Initialize Google Mobile Ads SDK
-      await MobileAds.instance.initialize();
+      // Setup callbacks for Interstitials
+      _setupCallbacks();
     } catch (e) {
-      debugPrint('AdManager init error: $e');
+      debugPrint('Appodeal init error: $e');
     } finally {
-      if (!_consentCompleter.isCompleted) {
-        _consentCompleter.complete();
+      if (!_initCompleter.isCompleted) {
+        _initCompleter.complete();
       }
     }
   }
 
-  static Future<void> _requestConsent() async {
-    final completer = Completer<void>();
-
-    final params = ConsentRequestParameters();
-    
-    ConsentInformation.instance.requestConsentInfoUpdate(
-      params,
-      () async {
-        if (await ConsentInformation.instance.isConsentFormAvailable()) {
-          ConsentForm.loadAndShowConsentFormIfRequired((loadAndShowError) {
-            if (loadAndShowError != null) {
-              debugPrint('Consent form load/show error: ${loadAndShowError.message}');
-            }
-            if (!completer.isCompleted) completer.complete();
-          });
-        } else {
-          if (!completer.isCompleted) completer.complete();
-        }
+  static void _setupCallbacks() {
+    Appodeal.setInterstitialCallbacks(
+      onInterstitialLoaded: (isPrecache) {
+        debugPrint('Appodeal Interstitial loaded (isPrecache: $isPrecache)');
+        _isLoading = false;
       },
-      (FormError error) {
-        debugPrint('Consent info update error: ${error.message}');
-        if (!completer.isCompleted) completer.complete();
+      onInterstitialFailedToLoad: () {
+        debugPrint('Appodeal Interstitial failed to load');
+        _isLoading = false;
+        _completeDismiss(false);
+      },
+      onInterstitialShown: () {
+        debugPrint('Appodeal Interstitial shown');
+      },
+      onInterstitialShowFailed: () {
+        debugPrint('Appodeal Interstitial show failed');
+        _completeDismiss(false);
+        loadInterstitial(); // Reload in background
+      },
+      onInterstitialClicked: () {
+        debugPrint('Appodeal Interstitial clicked');
+      },
+      onInterstitialClosed: () {
+        debugPrint('Appodeal Interstitial closed by user');
+        _completeDismiss(true);
+        loadInterstitial(); // Reload in background
+      },
+      onInterstitialExpired: () {
+        debugPrint('Appodeal Interstitial expired');
+        loadInterstitial(); // Reload in background
       },
     );
-
-    return completer.future;
   }
 
   /// Preload an interstitial ad.
   static Future<void> loadInterstitial() async {
-    await _consentCompleter.future;
+    await _initCompleter.future;
 
-    final canRequest = await ConsentInformation.instance.canRequestAds();
-    if (!canRequest) return;
+    if (_isLoading) return;
 
-    if (_isLoading || _interstitial != null) return;
+    final isLoaded = await Appodeal.isLoaded(AppodealAdType.Interstitial);
+    if (isLoaded) {
+      debugPrint('Appodeal Interstitial is already loaded.');
+      return;
+    }
 
+    debugPrint('Appodeal: Caching interstitial ad...');
     _isLoading = true;
-    await InterstitialAd.load(
-      adUnitId: _adUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (InterstitialAd ad) {
-          _interstitial = ad;
-          _isLoading = false;
-
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (_) {
-              _disposeAd();
-              _completeDismiss(true);
-              loadInterstitial(); // Background reload
-            },
-            onAdFailedToShowFullScreenContent: (_, AdError error) {
-              _disposeAd();
-              _completeDismiss(false);
-              loadInterstitial(); // Background reload
-            },
-          );
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          _interstitial = null;
-          _isLoading = false;
-          Future.delayed(const Duration(seconds: 10), loadInterstitial);
-        },
-      ),
-    );
+    try {
+      await Appodeal.cache(AppodealAdType.Interstitial);
+    } catch (e) {
+      debugPrint('Appodeal manual cache error: $e');
+      _isLoading = false;
+    }
   }
 
   /// Show the interstitial ad and **wait until the user dismisses it**.
   ///
   /// Returns `true` if the ad was shown AND user dismissed it normally.
-  /// Returns `false` if no ad was available, failed to show, or frequency cap not met.
+  /// Returns `false` if no ad was available, failed to show, or other issues.
   static Future<bool> showInterstitial() async {
-    await _consentCompleter.future;
+    await _initCompleter.future;
 
-    if (_interstitial == null) {
-      loadInterstitial();
+    final isLoaded = await Appodeal.isLoaded(AppodealAdType.Interstitial);
+    if (!isLoaded) {
+      debugPrint('Appodeal Interstitial is not loaded yet.');
+      loadInterstitial(); // Trigger cache loading in background
       return false;
     }
 
     _dismissCompleter = Completer<bool>();
 
     try {
-      await _interstitial!.show();
+      await Appodeal.show(AppodealAdType.Interstitial);
       return await _dismissCompleter!.future;
-    } catch (_) {
-      _disposeAd();
+    } catch (e) {
+      debugPrint('Appodeal show error: $e');
       _completeDismiss(false);
       loadInterstitial();
       return false;
     }
-  }
-
-  static void _disposeAd() {
-    _interstitial?.dispose();
-    _interstitial = null;
   }
 
   static void _completeDismiss(bool value) {
@@ -195,101 +168,24 @@ class AdManager {
 
   /// Dispose resources. Call when app is shutting down.
   static void dispose() {
-    _disposeAd();
     _dismissCompleter = null;
     _isLoading = false;
   }
 }
 
-/// A wrapper widget that loads and displays a BannerAd.
-class AdBannerWidget extends StatefulWidget {
+/// A wrapper widget that displays an AppodealBanner.
+class AdBannerWidget extends StatelessWidget {
   const AdBannerWidget({super.key});
 
   @override
-  State<AdBannerWidget> createState() => _AdBannerWidgetState();
-}
-
-class _AdBannerWidgetState extends State<AdBannerWidget> {
-  BannerAd? _bannerAd;
-  bool _isLoaded = false;
-  Orientation? _currentOrientation;
-  double? _currentWidth;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final orientation = MediaQuery.of(context).orientation;
-    final width = MediaQuery.of(context).size.width;
-
-    // Reload the ad if the orientation or width changes significantly.
-    if (_currentOrientation != orientation || _currentWidth != width) {
-      _currentOrientation = orientation;
-      _currentWidth = width;
-      _loadAd();
-    }
-  }
-
-  Future<void> _loadAd() async {
-    // Ensure we have consent before loading banner ads
-    await AdManager._consentCompleter.future;
-
-    final canRequest = await ConsentInformation.instance.canRequestAds();
-    if (!canRequest) return;
-
-    if (!mounted) return;
-
-    final width = MediaQuery.of(context).size.width.truncate();
-    final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
-
-    if (size == null || !mounted) {
-      return;
-    }
-
-    final oldBanner = _bannerAd;
-
-    _bannerAd = BannerAd(
-      adUnitId: AdManager._bannerAdUnitId,
-      size: size,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (Ad ad) {
-          debugPrint('BannerAd loaded.');
-          if (mounted) {
-            setState(() {
-              _isLoaded = true;
-            });
-          } else {
-            ad.dispose();
-          }
-        },
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          debugPrint('BannerAd failed to load: $error');
-          ad.dispose();
-          _bannerAd = null;
-        },
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      color: Colors.transparent,
+      child: AppodealBanner(
+        adSize: AppodealBannerSize.BANNER,
+        placement: 'default',
       ),
     );
-
-    await _bannerAd!.load();
-    oldBanner?.dispose();
-  }
-
-  @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_bannerAd != null && _isLoaded) {
-      return Container(
-        color: Colors.transparent,
-        width: _bannerAd!.size.width.toDouble(),
-        height: _bannerAd!.size.height.toDouble(),
-        child: AdWidget(ad: _bannerAd!),
-      );
-    }
-    return const SizedBox.shrink();
   }
 }
