@@ -23,6 +23,9 @@ class AdManager {
   
   static final Completer<void> _initCompleter = Completer<void>();
 
+  /// Notifier to trigger banner widget rebuilds when a full-screen event closes or dismisses.
+  static final ValueNotifier<int> bannerRebuildNotifier = ValueNotifier<int>(0);
+
   /// Initialize the Appodeal Ads SDK. Call once in `main()`.
   /// Returns immediately, starting initialization in the background.
   static Future<void> init() async {
@@ -93,6 +96,8 @@ class AdManager {
       onInterstitialShowFailed: () {
         debugPrint('Appodeal Interstitial show failed');
         _completeDismiss(false);
+        // Force recreation of banners after full screen overlay closes/fails
+        bannerRebuildNotifier.value++;
         loadInterstitial(); // Reload in background
       },
       onInterstitialClicked: () {
@@ -101,6 +106,8 @@ class AdManager {
       onInterstitialClosed: () {
         debugPrint('Appodeal Interstitial closed by user');
         _completeDismiss(true);
+        // Force recreation of banners after full screen overlay closes/fails
+        bannerRebuildNotifier.value++;
         loadInterstitial(); // Reload in background
       },
       onInterstitialExpired: () {
@@ -174,18 +181,28 @@ class AdManager {
 }
 
 /// A wrapper widget that displays an AppodealBanner.
+///
+/// Listens to [AdManager.bannerRebuildNotifier] to automatically recreate the platform view
+/// with a unique key whenever full-screen interstitial ads close or fail to show.
+/// This prevents the native banner platform view from disappearing after overlay events.
 class AdBannerWidget extends StatelessWidget {
   const AdBannerWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      color: Colors.transparent,
-      child: AppodealBanner(
-        adSize: AppodealBannerSize.BANNER,
-        placement: 'default',
-      ),
+    return ValueListenableBuilder<int>(
+      valueListenable: AdManager.bannerRebuildNotifier,
+      builder: (context, value, child) {
+        return Container(
+          alignment: Alignment.center,
+          color: Colors.transparent,
+          child: AppodealBanner(
+            key: ValueKey('appodeal_banner_$value'),
+            adSize: AppodealBannerSize.BANNER,
+            placement: 'default',
+          ),
+        );
+      },
     );
   }
 }
