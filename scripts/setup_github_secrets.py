@@ -136,10 +136,8 @@ def main():
     upload_secret(token, "ANDROID_KEY_PROPERTIES", key_properties_content)
     upload_secret(token, "ANDROID_KEYSTORE_BASE64", keystore_base64)
     
-    # Optional AdMob app ID for testing
-    upload_secret(token, "ADMOB_ANDROID_APP_ID", "ca-app-pub-3940256099942544~3347511713")
-    
     print("\n==========================================================")
+
     print("  ✓ Setup successful! Your repository is now fully prepared")
     print("    for Android building and signing on GitHub Actions.")
     print("==========================================================")
