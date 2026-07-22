@@ -45,7 +45,9 @@ web/.dart_tool/
 .env
 error_logs/
 build_logs/
+build_artifacts/
 run_recordings/
+
 chat_export_*.md
 %USERPROFILE%/
 
@@ -55,6 +57,9 @@ chat_export_*.md
 test_*.jpg
 photo_result/
 expected_filters/
+!scripts/**/*.py
+!scripts/**/*.md
+
 
 # iOS Certificates (Sensitive local-only credentials)
 ios_distribution.key
@@ -70,5 +75,6 @@ keys.txt
 
 # Agent and tool configurations
 .codewhale/
-AGENTS.md
+!AGENTS.md
 .agents/
+
