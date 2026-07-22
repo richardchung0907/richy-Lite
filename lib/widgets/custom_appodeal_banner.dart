@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class CustomAppodealBanner extends StatefulWidget {
   /// The size of the banner to display.
@@ -25,44 +26,62 @@ class CustomAppodealBanner extends StatefulWidget {
   _CustomAppodealBannerState createState() => _CustomAppodealBannerState();
 }
 
+class BannerConfig {
+  final Size size;
+  final bool isEmulator;
+
+  BannerConfig({required this.size, required this.isEmulator});
+}
+
 class _CustomAppodealBannerState extends State<CustomAppodealBanner> {
   final UniqueKey _key = UniqueKey();
   final String _viewType = 'appodeal_flutter/banner_view';
 
-  late final Future<Size> _adSizeFuture;
+  late final Future<BannerConfig> _bannerConfigFuture;
 
   @override
   void initState() {
     super.initState();
-    _adSizeFuture = _getAdSize();
+    _bannerConfigFuture = _getBannerConfig();
   }
 
-  Future<Size> _getAdSize() async {
-    return Size(
+  Future<BannerConfig> _getBannerConfig() async {
+    final size = Size(
       widget.adSize.width.toDouble(),
       widget.adSize.height.toDouble(),
     );
+    bool isEmulator = false;
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        // isPhysicalDevice will be false on Android Emulators
+        isEmulator = !androidInfo.isPhysicalDevice;
+      }
+    } catch (e) {
+      // In case of any exception, default to false (safe-fallback)
+    }
+    return BannerConfig(size: size, isEmulator: isEmulator);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Size>(
-      future: _adSizeFuture,
+    return FutureBuilder<BannerConfig>(
+      future: _bannerConfigFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SizedBox.shrink();
         }
-        final adSize = snapshot.data!;
+        final config = snapshot.data!;
         return SizedBox.fromSize(
-          size: adSize,
-          child: _buildPlatformSpecificView(),
+          size: config.size,
+          child: _buildPlatformSpecificView(config.isEmulator),
         );
       },
     );
   }
 
   /// Builds the platform-specific view for displaying the banner.
-  Widget _buildPlatformSpecificView() {
+  Widget _buildPlatformSpecificView(bool isEmulator) {
     if (Platform.isIOS) {
       return UiKitView(
         key: _key,
@@ -71,10 +90,12 @@ class _CustomAppodealBannerState extends State<CustomAppodealBanner> {
         creationParamsCodec: const StandardMessageCodec(),
       );
     } else if (Platform.isAndroid) {
-      // We force standard Hybrid Composition (using initExpensiveAndroidView) on Android.
-      // This embeds the native AdView directly in the real Android view hierarchy.
-      // This completely resolves texture composting / transparency bugs on Mali GPUs (e.g. Samsung A5),
-      // and guarantees that the Appodeal / Google Mobile Ads visibility monitor reports 100% visibility.
+      // We dynamically adapt composition modes:
+      // 1. On real physical Android devices (especially with GPUs like Mali on Samsung A5),
+      //    we use Hybrid Composition (initExpensiveAndroidView) to resolve texture composting/transparency bugs.
+      // 2. On Android Emulators (running swiftshader/translation layers), Hybrid Composition
+      //    deadlocks or freezes into a black screen after focus switches (such as native Share sheet popups).
+      //    Thus, we use standard Virtual Display (initSurfaceAndroidView) on emulators.
       return PlatformViewLink(
         key: _key,
         viewType: _viewType,
@@ -86,16 +107,31 @@ class _CustomAppodealBannerState extends State<CustomAppodealBanner> {
           );
         },
         onCreatePlatformView: (params) {
-          return PlatformViewsService.initExpensiveAndroidView(
-            id: params.id,
-            viewType: _viewType,
-            layoutDirection: TextDirection.ltr,
-            creationParams: _bannerCreationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onFocus: () => params.onFocusChanged(true),
-          )
-            ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
-            ..create();
+          if (isEmulator) {
+            // Fallback to Virtual Display for Emulators
+            return PlatformViewsService.initSurfaceAndroidView(
+              id: params.id,
+              viewType: _viewType,
+              layoutDirection: TextDirection.ltr,
+              creationParams: _bannerCreationParams,
+              creationParamsCodec: const StandardMessageCodec(),
+              onFocus: () => params.onFocusChanged(true),
+            )
+              ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+              ..create();
+          } else {
+            // Keep Hybrid Composition for physical devices
+            return PlatformViewsService.initExpensiveAndroidView(
+              id: params.id,
+              viewType: _viewType,
+              layoutDirection: TextDirection.ltr,
+              creationParams: _bannerCreationParams,
+              creationParamsCodec: const StandardMessageCodec(),
+              onFocus: () => params.onFocusChanged(true),
+            )
+              ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+              ..create();
+          }
         },
       );
     } else {

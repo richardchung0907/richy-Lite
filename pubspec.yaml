@@ -34,6 +34,7 @@ dependencies:
   # Appodeal — ad mediation
   stack_appodeal_flutter: ^4.2.0
   url_launcher: ^6.3.2
+  device_info_plus: ^13.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
