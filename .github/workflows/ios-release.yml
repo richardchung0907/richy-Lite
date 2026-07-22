@@ -3,7 +3,7 @@ name: iOS Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*-ios'
   workflow_dispatch:
 
 jobs:
