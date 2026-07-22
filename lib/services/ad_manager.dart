@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
+import '../widgets/custom_appodeal_banner.dart';
 
 /// Manages Appodeal Interstitial and Banner ads for RICHY Lite.
 ///
@@ -48,6 +49,15 @@ class AdManager {
 
       // Disable auto caching for Interstitials to give us manual caching control
       await Appodeal.setAutoCache(AppodealAdType.Interstitial, false);
+
+      // Enable verbose logging for debugging on Android physical device
+      await Appodeal.setLogLevel(Appodeal.LogLevelVerbose);
+      // Disable banner refresh animations to prevent sudden disappearances on refresh
+      await Appodeal.setBannerAnimation(false);
+      // Disable smart banners to ensure the container size we provide in Flutter is perfectly matched
+      await Appodeal.setSmartBanners(false);
+      // Disable SDK safe area to ensure the platform view is sized exactly as requested
+      await Appodeal.setUseSafeArea(false);
 
       // Step 2: Initialize Appodeal SDK
       final key = _appKey;
@@ -224,25 +234,13 @@ class AdBannerWidget extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        // Dynamically compute the safe layout height using the physical pixel conversion.
-        // On fractional-pixel devices like Samsung Galaxy A5 (2.625 DPR), a hardcoded height of 50
-        // maps to 131.25 physical pixels, which is truncated to 131 physical pixels by Flutter.
-        // But the Appodeal/Google Mobile Ads SDK requires exactly 50dp * 2.625 = 131.25 physical pixels.
-        // Since 131 < 131.25, the SDK's visibility monitor detects that the ad is clipped/obscured,
-        // making the ad invisible/transparent within <1 second (while remaining active and clickable).
-        // By rounding up to the next physical pixel and adding a 2-physical-pixel safe buffer,
-        // we guarantee that the ad view is never clipped on any device, fully resolving the bug.
-        final dpr = MediaQuery.of(context).devicePixelRatio;
-        final double adHeight = ((50.0 * dpr).ceil() + 2) / dpr;
-
         return ValueListenableBuilder<Color>(
           valueListenable: AdManager.bannerBackgroundColorNotifier,
           builder: (context, bgColor, child) {
             return Container(
               alignment: Alignment.center,
               color: bgColor,
-              height: adHeight,
-              child: const AppodealBanner(
+              child: const CustomAppodealBanner(
                 key: ValueKey('global_appodeal_banner_view'),
                 adSize: AppodealBannerSize.BANNER,
                 placement: 'default',
