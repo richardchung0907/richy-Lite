@@ -12,7 +12,7 @@ class AdManager {
   AdManager._();
 
   static const String _androidAppKey = '1e61cf1304d32d47bbbe6c7f6f230eb445645aca570c8414';
-  static const String _iosAppKey = ''; // No iOS key in keys.txt for now
+  static const String _iosAppKey = '987791e06065c466883864bcd7adda11098f31b7c7a9a290';
 
   static String get _appKey {
     return Platform.isAndroid ? _androidAppKey : _iosAppKey;
