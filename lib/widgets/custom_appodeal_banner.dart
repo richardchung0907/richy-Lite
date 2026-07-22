@@ -125,13 +125,32 @@ class _CustomAppodealBannerState extends State<CustomAppodealBanner> with Single
         creationParamsCodec: const StandardMessageCodec(),
       );
     } else if (Platform.isAndroid) {
-      // Use standard AndroidView (Virtual Display) which is highly performant and 
-      // guarantees lag-free, flicker-free rendering during Appodeal's 10-second banner refresh cycles.
-      return AndroidView(
+      // Revert to Hybrid Composition (initExpensiveAndroidView) to satisfy Appodeal/AdMob's 
+      // strict native VisibilityTracker, ensuring ads load and display with 100% visibility score.
+      return PlatformViewLink(
         key: _key,
         viewType: _viewType,
-        creationParams: _bannerCreationParams,
-        creationParamsCodec: const StandardMessageCodec(),
+        surfaceFactory: (context, controller) {
+          return AndroidViewSurface(
+            controller: controller as AndroidViewController,
+            gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
+            hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+          );
+        },
+        onCreatePlatformView: (params) {
+          return PlatformViewsService.initExpensiveAndroidView(
+            id: params.id,
+            viewType: _viewType,
+            layoutDirection: TextDirection.ltr,
+            creationParams: _bannerCreationParams,
+            creationParamsCodec: const StandardMessageCodec(),
+            onFocus: () {
+              params.onFocusChanged(true);
+            },
+          )
+            ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+            ..create();
+        },
       );
     } else {
       return const SizedBox.shrink(); // Fallback for other platforms

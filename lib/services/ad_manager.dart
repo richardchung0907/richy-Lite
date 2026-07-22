@@ -158,7 +158,8 @@ class AdManager {
       },
       onBannerExpired: () {
         debugPrint('Appodeal Banner expired');
-        isBannerLoadedNotifier.value = false;
+        // Keep isBannerLoadedNotifier.value as true to let background auto-refresh 
+        // occur silently without triggering flickering or loading skeletons!
       },
     );
   }
