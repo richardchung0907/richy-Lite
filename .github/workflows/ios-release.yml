@@ -22,10 +22,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Inject AdMob App ID
-        run: |
-          plutil -replace GADApplicationIdentifier -string "${{ secrets.ADMOB_IOS_APP_ID }}" ios/Runner/Info.plist
-
       - name: Configure signing in ExportOptions.plist
         run: |
           plutil -replace signingStyle -string "manual" ios/Runner/ExportOptions.plist
@@ -75,9 +71,7 @@ jobs:
       - name: Build iOS IPA
         run: |
           flutter build ipa --release --export-options-plist=ios/Runner/ExportOptions.plist \
-            --build-number=${{ github.run_number }} \
-            --dart-define=ADMOB_IOS_UNIT_ID=${{ secrets.ADMOB_IOS_UNIT_ID }} \
-            --dart-define=ADMOB_IOS_BANNER_UNIT_ID=${{ secrets.ADMOB_IOS_BANNER_UNIT_ID }}
+            --build-number=${{ github.run_number }}
 
       - name: Locate IPA File
         run: |

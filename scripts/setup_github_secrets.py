@@ -3,8 +3,10 @@
 Setup GitHub Action Secrets
 ===========================
 Packages, encrypts, and uploads key properties, keystores, and credentials
-from your local environment to GitHub Actions repository secrets using WMI
-and Libsodium.
+from your local environment to GitHub Actions repository secrets using WMI,
+Libsodium (pynacl), and the GitHub API.
+
+Supports both Android and iOS signing credentials.
 """
 
 import sys
@@ -45,32 +47,42 @@ except ImportError:
 REPO_OWNER = "richardchung0907"
 REPO_NAME = "richy-Lite"
 KEYS_FILE = "keys.txt"
+
+# Android Files
 KEY_PROPERTIES_FILE = os.path.join("android", "key.properties")
 KEYSTORE_FILE = os.path.join("android", "app", "upload-keystore.jks")
 
-def get_github_token():
+# iOS Files
+CERTIFICATE_FILE = "certificates.p12"
+PROVISIONING_PROFILE_FILE = "Richy_Lite_App_Store_Profile.mobileprovision"
+APPSTORE_CONNECT_KEY_FILE = "AuthKey_LSLS88W574.p8"
+
+def parse_keys_file():
     if not os.path.exists(KEYS_FILE):
         print(f"Error: {KEYS_FILE} not found in current directory.")
         sys.exit(1)
     
+    keys = {}
     with open(KEYS_FILE, "r", encoding="utf-8") as f:
         for line in f:
-            if line.startswith("Github key:"):
-                return line.split("Github key:")[1].strip()
-    
-    print("Error: Could not find 'Github key' in keys.txt.")
-    sys.exit(1)
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if ":" in line:
+                key, value = line.split(":", 1)
+                keys[key.strip()] = value.strip()
+    return keys
 
 def get_file_content_base64(file_path):
     if not os.path.exists(file_path):
-        print(f"Error: Required signing file not found: {file_path}")
+        print(f"Error: Required file not found: {file_path}")
         sys.exit(1)
     with open(file_path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 
 def get_text_file_content(file_path):
     if not os.path.exists(file_path):
-        print(f"Error: Required signing properties file not found: {file_path}")
+        print(f"Error: Required file not found: {file_path}")
         sys.exit(1)
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read().strip()
@@ -117,29 +129,60 @@ def upload_secret(token, secret_name, secret_value):
 
 def main():
     print("==========================================================")
-    print("  RICHY Lite — GitHub Actions Android Build Setup")
+    print("  RICHY Lite — GitHub Actions Android & iOS Build Setup")
     print("==========================================================\n")
     
-    token = get_github_token()
+    keys = parse_keys_file()
+    token = keys.get("Github key")
+    if not token:
+        print("Error: Could not retrieve 'Github key' from keys.txt.")
+        sys.exit(1)
     print("✓ Successfully retrieved GitHub PAT from keys.txt.")
     
-    # Read android/key.properties
-    key_properties_content = get_text_file_content(KEY_PROPERTIES_FILE)
-    print("✓ Loaded android/key.properties content.")
-    
-    # Read and encode android/app/upload-keystore.jks
-    keystore_base64 = get_file_content_base64(KEYSTORE_FILE)
-    print("✓ Encoded android/app/upload-keystore.jks to Base64.")
-    
-    # Upload Secrets to GitHub
-    print("\nUploading secrets to richardchung0907/richy-Lite...")
-    upload_secret(token, "ANDROID_KEY_PROPERTIES", key_properties_content)
-    upload_secret(token, "ANDROID_KEYSTORE_BASE64", keystore_base64)
-    
-    print("\n==========================================================")
+    # --- 1. Android Secrets ---
+    print("\n[Preparing Android Secrets]")
+    if os.path.exists(KEY_PROPERTIES_FILE) and os.path.exists(KEYSTORE_FILE):
+        key_properties_content = get_text_file_content(KEY_PROPERTIES_FILE)
+        keystore_base64 = get_file_content_base64(KEYSTORE_FILE)
+        print("✓ Loaded and prepared Android signing keys.")
+        
+        print("Uploading Android secrets to GitHub...")
+        upload_secret(token, "ANDROID_KEY_PROPERTIES", key_properties_content)
+        upload_secret(token, "ANDROID_KEYSTORE_BASE64", keystore_base64)
+    else:
+        print("⚠ Android signing files missing or skipped.")
 
+    # --- 2. iOS Secrets ---
+    print("\n[Preparing iOS Secrets]")
+    
+    cert_pwd = keys.get("IOS_BUILD_CERTIFICATE_PASSWORD")
+    prof_name = keys.get("IOS_PROVISIONING_PROFILE_NAME")
+    issuer_id = keys.get("Issuer ID for App Store Connect API")
+    key_id = keys.get("Key ID for App Store Connect API")
+    
+    if not all([cert_pwd, prof_name, issuer_id, key_id]):
+        print("Error: Some required iOS properties are missing from keys.txt.")
+        sys.exit(1)
+        
+    cert_base64 = get_file_content_base64(CERTIFICATE_FILE)
+    prov_profile_base64 = get_file_content_base64(PROVISIONING_PROFILE_FILE)
+    appstore_key_content = get_text_file_content(APPSTORE_CONNECT_KEY_FILE)
+    
+    print("✓ Loaded and encoded all iOS certificates and profiles.")
+    
+    print("Uploading iOS secrets to GitHub...")
+    upload_secret(token, "IOS_PROVISIONING_PROFILE_NAME", prof_name)
+    upload_secret(token, "IOS_BUILD_CERTIFICATE_BASE64", cert_base64)
+    upload_secret(token, "IOS_BUILD_CERTIFICATE_PASSWORD", cert_pwd)
+    upload_secret(token, "IOS_PROVISIONING_PROFILE_BASE64", prov_profile_base64)
+    upload_secret(token, "KEYCHAIN_PASSWORD", cert_pwd) # Reuse cert password for temporary runner keychain
+    upload_secret(token, "APPSTORE_ISSUER_ID", issuer_id)
+    upload_secret(token, "APPSTORE_KEY_ID", key_id)
+    upload_secret(token, "APPSTORE_PRIVATE_KEY", appstore_key_content)
+
+    print("\n==========================================================")
     print("  ✓ Setup successful! Your repository is now fully prepared")
-    print("    for Android building and signing on GitHub Actions.")
+    print("    for BOTH Android & iOS building on GitHub Actions.")
     print("==========================================================")
 
 if __name__ == "__main__":

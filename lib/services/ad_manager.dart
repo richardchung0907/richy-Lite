@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
 import '../widgets/custom_appodeal_banner.dart';
@@ -44,8 +45,8 @@ class AdManager {
     try {
       debugPrint('Appodeal: Initializing SDK...');
       
-      // Step 1: Set testing mode (Test ads)
-      await Appodeal.setTesting(true);
+      // Step 1: Set testing mode dynamically (Test ads in debug/profile, live ads in release)
+      await Appodeal.setTesting(!kReleaseMode);
 
       // Disable auto caching for Interstitials to give us manual caching control
       await Appodeal.setAutoCache(AppodealAdType.Interstitial, false);

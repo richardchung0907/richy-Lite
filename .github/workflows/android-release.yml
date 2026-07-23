@@ -51,15 +51,11 @@ jobs:
           fi
 
       - name: Build Android APK
-        env:
-          ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
         run: |
           flutter build apk --release \
             --build-number=${{ github.run_number }}
 
       - name: Build Android App Bundle (AAB)
-        env:
-          ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
         run: |
           flutter build appbundle --release \
             --build-number=${{ github.run_number }}

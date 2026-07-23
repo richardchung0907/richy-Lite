@@ -26,10 +26,6 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
-		<!-- ── Google AdMob ──────────────────────────────────────── -->
-		<!-- TODO: REPLACE WITH PRODUCTION IOS APP ID -->
-		<key>GADApplicationIdentifier</key>
-		<string>ca-app-pub-3940256099942544~1458002511</string>
 		<key>NSUserTrackingUsageDescription</key>
 		<string>This identifier will be used to deliver personalized ads to you and support this free app. Your data remains secure and is not used for any other purpose.</string>
 		<key>SKAdNetworkItems</key>

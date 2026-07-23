@@ -13,8 +13,6 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-val envAdmobId = System.getenv("ADMOB_ANDROID_APP_ID")?.takeIf { it.isNotBlank() } ?: "ca-app-pub-3940256099942544~3347511713"
-
 android {
     namespace = "com.richylite.richyLite"
     compileSdk = flutter.compileSdkVersion
@@ -34,7 +32,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["admobAppId"] = envAdmobId
     }
 
     signingConfigs {
@@ -68,7 +65,6 @@ flutter {
 
 dependencies {
     implementation("com.appodeal.ads.sdk:core:4.2.0")
-    implementation("com.appodeal.ads.sdk.adapters:admob:24.7.0.0")
     implementation("com.appodeal.ads.sdk.adapters:applovin:13.5.1.0")
     implementation("com.appodeal.ads.sdk.adapters:ironsource:9.1.0.0")
     implementation("com.appodeal.ads.sdk.adapters:unity_ads:4.17.0.0")
