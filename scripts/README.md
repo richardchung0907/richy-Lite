@@ -28,6 +28,14 @@ Welcome, developer or AI agent! This directory contains the complete automation 
   - *Purpose*: Resolves Libsodium/pynacl encryption to package, encrypt, and upload signing keystores, key properties, and API tokens to GitHub Actions secrets.
   - *Usage*: `python scripts/setup_github_secrets.py`
 
+- **[appstore_connect_audit.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/appstore_connect_audit.py)**
+  - *Purpose*: Queries App Store Connect REST API via JWT (ES256) to perform deep metadata, localization, category, age rating, screenshot, and build readiness audits.
+  - *Usage*: `python scripts/appstore_connect_audit.py`
+
+- **[appstore_connect_enhance.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/appstore_connect_enhance.py)**
+  - *Purpose*: Automates App Store Connect REST API updates including creating 6.5" screenshot sets across all 10 localized languages and attaching latest builds to App Store versions.
+  - *Usage*: `python scripts/appstore_connect_enhance.py`
+
 ### 3. Pipeline Build Orchestration
 - **[build_android.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/build_android.py)**
   - *Purpose*: Main Android build pipeline tool. Checks environments, runs `flutter pub get` and `flutter analyze`, and builds debug or release APKs or App Bundles.

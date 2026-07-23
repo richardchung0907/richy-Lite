@@ -24,6 +24,8 @@
 - **`deploy_apk.py`** — 專用於本地 Release APK 的 WMI 獨立進程掛載與 Android 8.0/9.0 模擬器安裝。
 - **`github_build_handler.py`** — 遠端 Actions 觸發、自動進度輪詢及 APK 下載整合腳本。
 - **`setup_github_secrets.py`** — 自動進行 GitHub 密鑰、密碼及 keystore 加密並上傳到 Actions。
+- **`appstore_connect_audit.py`** — 經由 JWT ES256 驗證深入檢測 App Store Connect 元數據、多語言、分類及 TestFlight 狀態。
+- **`appstore_connect_enhance.py`** — 自動進行 App Store Connect REST API 設定優化（如 6.5" 螢幕尺寸配置及建置版本關聯）。
 - **`build_android.py`** — Android 建置與靜態分析主工具。
 - **`build_ios.py`** — iOS 建置引導與 EAS 雲端建置配置工具。
 - **`setup_and_build.py`** — 全自動環境初始化、Flutter 安裝與建置主指令。
