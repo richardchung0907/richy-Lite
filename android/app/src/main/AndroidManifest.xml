@@ -5,12 +5,18 @@
     <!-- Internet access for potential future features -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Network state permission for Appodeal ad-network caching -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Camera permission for taking photos -->
     <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- Storage permissions for gallery access & saving photos -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29" />
+
+    <!-- Mandatory Google Play Advertising ID permission for targeted ads (maximizes revenue) -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <!-- Hardware features (not required, but declared for Play Store filtering) -->
     <uses-feature
