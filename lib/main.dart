@@ -13,7 +13,7 @@ Future<void> main() async {
   // Initialize i18n
   await EasyLocalization.ensureInitialized();
 
-  // Initialize Google Mobile Ads SDK
+  // Initialize Appodeal SDK
   await AdManager.init();
 
   // Initialize error logger for test phase
