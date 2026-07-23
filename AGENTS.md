@@ -27,7 +27,9 @@
 - **`appstore_connect_audit.py`** — 經由 JWT ES256 驗證深入檢測 App Store Connect 元數據、多語言、分類及 TestFlight 狀態。
 - **`appstore_connect_enhance.py`** — 自動進行 App Store Connect REST API 設定優化（如 6.5" 螢幕尺寸配置及建置版本關聯）。
 - **`process_screenshots.py`** — 使用 Pillow LANCZOS 演算法處理原始圖片至 6.5" 標準尺寸 (1242x2688) 避免失真。
+- **`process_55_screenshots.py`** — 使用 Pillow LANCZOS 演算法處理原始圖片至 5.5" 標準尺寸 (1242x2208) 避免失真。
 - **`upload_screenshots_appstore.py`** — 將 6.5" 截圖經由 REST API 上傳至 10 大語言分區。
+- **`replace_55_screenshots_appstore.py`** — 將全新 5.5" 截圖經由 REST API 替換上傳至 10 大語言分區。
 - **`verify_appstore_state.py`** — 即時查詢 App Store Connect 後台關聯版本與截圖狀態。
 - **`build_android.py`** — Android 建置與靜態分析主工具。
 - **`build_ios.py`** — iOS 建置引導與 EAS 雲端建置配置工具。

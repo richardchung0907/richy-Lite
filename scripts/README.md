@@ -40,9 +40,17 @@ Welcome, developer or AI agent! This directory contains the complete automation 
   - *Purpose*: Uses Pillow (PIL) LANCZOS resampling to convert raw images from `appScreenshots/raw/` into exact 1242x2688 px PNGs without distortion for 6.5" iPhone display submission.
   - *Usage*: `python scripts/process_screenshots.py`
 
+- **[process_55_screenshots.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/process_55_screenshots.py)**
+  - *Purpose*: Uses Pillow (PIL) LANCZOS resampling to convert raw images from `appScreenshots/raw/` into exact 1242x2208 px PNGs without distortion for 5.5" iPhone display submission.
+  - *Usage*: `python scripts/process_55_screenshots.py`
+
 - **[upload_screenshots_appstore.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/upload_screenshots_appstore.py)**
   - *Purpose*: Uploads processed 6.5" PNG screenshots into App Store Connect via REST API reservation, chunked binary PUT, and commit across all 10 localized markets.
   - *Usage*: `python scripts/upload_screenshots_appstore.py`
+
+- **[replace_55_screenshots_appstore.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/replace_55_screenshots_appstore.py)**
+  - *Purpose*: Deletes old 5.5" screenshots and uploads newly processed 1242x2208 PNG screenshots into App Store Connect via REST API across all 10 localized markets.
+  - *Usage*: `python scripts/replace_55_screenshots_appstore.py`
 
 - **[verify_appstore_state.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/verify_appstore_state.py)**
   - *Purpose*: Queries App Store Connect API in real-time to verify attached build version and screenshot asset counts across all localizations.
