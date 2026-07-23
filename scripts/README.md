@@ -36,6 +36,18 @@ Welcome, developer or AI agent! This directory contains the complete automation 
   - *Purpose*: Automates App Store Connect REST API updates including creating 6.5" screenshot sets across all 10 localized languages and attaching latest builds to App Store versions.
   - *Usage*: `python scripts/appstore_connect_enhance.py`
 
+- **[process_screenshots.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/process_screenshots.py)**
+  - *Purpose*: Uses Pillow (PIL) LANCZOS resampling to convert raw images from `appScreenshots/raw/` into exact 1242x2688 px PNGs without distortion for 6.5" iPhone display submission.
+  - *Usage*: `python scripts/process_screenshots.py`
+
+- **[upload_screenshots_appstore.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/upload_screenshots_appstore.py)**
+  - *Purpose*: Uploads processed 6.5" PNG screenshots into App Store Connect via REST API reservation, chunked binary PUT, and commit across all 10 localized markets.
+  - *Usage*: `python scripts/upload_screenshots_appstore.py`
+
+- **[verify_appstore_state.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/verify_appstore_state.py)**
+  - *Purpose*: Queries App Store Connect API in real-time to verify attached build version and screenshot asset counts across all localizations.
+  - *Usage*: `python scripts/verify_appstore_state.py`
+
 ### 3. Pipeline Build Orchestration
 - **[build_android.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/build_android.py)**
   - *Purpose*: Main Android build pipeline tool. Checks environments, runs `flutter pub get` and `flutter analyze`, and builds debug or release APKs or App Bundles.
