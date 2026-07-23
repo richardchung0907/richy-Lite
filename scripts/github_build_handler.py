@@ -73,11 +73,10 @@ def main():
     print("==========================================================\n")
 
     # 1. Commit any uncommitted changes first (e.g. ad_manager.dart update)
-    status_res = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
-    if status_res.stdout.strip():
-        print("Checking for unstaged local changes...")
-        # Check if ad_manager.dart or keys.txt are modified
-        # Note: keys.txt is git-ignored, so we only stage files that are trackable
+    # Check if lib/services/ad_manager.dart is actually modified
+    diff_res = subprocess.run(["git", "diff", "--name-only", "lib/services/ad_manager.dart"], capture_output=True, text=True)
+    if diff_res.stdout.strip():
+        print("Checking for unstaged local changes in ad_manager.dart...")
         subprocess.run(["git", "add", "lib/services/ad_manager.dart"], check=True)
         commit_msg = f"chore(ad): update Appodeal App Key dynamic configuration for {platform_label}"
         subprocess.run(["git", "commit", "-m", commit_msg], check=True)
