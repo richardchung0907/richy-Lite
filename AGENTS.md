@@ -31,6 +31,7 @@
 - **`upload_screenshots_appstore.py`** — 將 6.5" 截圖經由 REST API 上傳至 10 大語言分區。
 - **`replace_55_screenshots_appstore.py`** — 將全新 5.5" 截圖經由 REST API 替換上傳至 10 大語言分區。
 - **`verify_appstore_state.py`** — 即時查詢 App Store Connect 後台關聯版本與截圖狀態。
+- **`appodeal_api_handler.py`** — 經由 Appodeal REST API 進行全方位 App 廣告設定、版位與競價瀑布流檢測與自動化修改嘗試。
 - **`build_android.py`** — Android 建置與靜態分析主工具。
 - **`build_ios.py`** — iOS 建置引導與 EAS 雲端建置配置工具。
 - **`setup_and_build.py`** — 全自動環境初始化、Flutter 安裝與建置主指令。

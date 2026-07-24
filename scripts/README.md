@@ -56,6 +56,10 @@ Welcome, developer or AI agent! This directory contains the complete automation 
   - *Purpose*: Queries App Store Connect API in real-time to verify attached build version and screenshot asset counts across all localizations.
   - *Usage*: `python scripts/verify_appstore_state.py`
 
+- **[appodeal_api_handler.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/appodeal_api_handler.py)**
+  - *Purpose*: Systematically queries and attempts modifications to Appodeal app settings, placements, mediation waterfalls, and account configurations using the Appodeal REST API.
+  - *Usage*: `python scripts/appodeal_api_handler.py`
+
 ### 3. Pipeline Build Orchestration
 - **[build_android.py](file:///c:/Users/User/Desktop/MYproject/Filter_APP2/scripts/build_android.py)**
   - *Purpose*: Main Android build pipeline tool. Checks environments, runs `flutter pub get` and `flutter analyze`, and builds debug or release APKs or App Bundles.
