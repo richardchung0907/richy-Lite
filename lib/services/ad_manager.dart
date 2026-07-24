@@ -45,8 +45,8 @@ class AdManager {
     try {
       debugPrint('Appodeal: Initializing SDK...');
       
-      // Step 1: Set testing mode dynamically (Test ads in debug/profile, live ads in release)
-      await Appodeal.setTesting(!kReleaseMode);
+      // Step 1: Set testing mode unconditionally for safe real-device testing
+      await Appodeal.setTesting(true);
 
       // Disable auto caching for Interstitials to give us manual caching control
       await Appodeal.setAutoCache(AppodealAdType.Interstitial, false);
