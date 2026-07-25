@@ -44,6 +44,16 @@ class AdManager {
   static Future<void> _initializeAsync() async {
     try {
       debugPrint('Appodeal: Initializing SDK...');
+
+      // Request iOS App Tracking Transparency (ATT) authorization if on iOS
+      if (Platform.isIOS) {
+        try {
+          debugPrint('Appodeal: Requesting iOS tracking authorization...');
+          await Appodeal.requestIOSTrackingAuthorization();
+        } catch (e) {
+          debugPrint('Appodeal ATT authorization request error: $e');
+        }
+      }
       
       // Step 1: Set testing mode unconditionally for safe real-device testing
       await Appodeal.setTesting(false);
@@ -208,6 +218,67 @@ class AdManager {
   static void dispose() {
     _dismissCompleter = null;
     _isLoading = false;
+  }
+
+  /// Programmatically load and display the Appodeal GDPR/CCPA Consent / Privacy Options Form.
+  /// Allows users to review, change, or revoke their consent choices at any time.
+  static Future<void> showPrivacySettings(BuildContext context) async {
+    // Show loading overlay so the user knows something is happening in the background
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE6395A)),
+        ),
+      ),
+    );
+
+    try {
+      final key = _appKey;
+      await Appodeal.ConsentForm.load(
+        appKey: key,
+        onConsentFormLoadSuccess: (status) async {
+          // Close the loading dialog
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+
+          // Show the loaded consent form
+          await Appodeal.ConsentForm.show(
+            onConsentFormDismissed: (error) {
+              if (error != null) {
+                debugPrint('Appodeal: ConsentForm show error: $error');
+              } else {
+                debugPrint('Appodeal: ConsentForm shown and dismissed successfully.');
+              }
+            },
+          );
+        },
+        onConsentFormLoadFailure: (error) {
+          // Close the loading dialog
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          debugPrint('Appodeal: ConsentForm load failure: $error');
+          
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unable to load privacy preferences at this time. Please try again later.'),
+                backgroundColor: Color(0xFFE6395A),
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      // Close loading dialog if open
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+      debugPrint('Appodeal showPrivacySettings error: $e');
+    }
   }
 }
 

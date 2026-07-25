@@ -134,26 +134,102 @@ class _HomeScreenState extends State<HomeScreen> {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('Privacy Policy'),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            title: Row(
                               children: [
-                                const Text('RICHY Lite values your privacy. We use device identifiers solely to deliver relevant advertisements.'),
-                                const SizedBox(height: 16),
-                                InkWell(
-                                  onTap: () => launchUrl(Uri.parse('https://richardchung0907.github.io/richy-Lite/')),
-                                  child: const Text(
-                                    'https://richardchung0907.github.io/richy-Lite/',
-                                    style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
-                                  ),
+                                Icon(Icons.security_rounded, color: const Color(0xFFE6395A)),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Privacy Settings',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ],
+                            ),
+                            content: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'RICHY Lite values your privacy. We partner with Appodeal to serve personalized advertisements to support this free app.',
+                                    style: TextStyle(fontSize: 14, height: 1.4),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'To deliver relevant ads, Appodeal and its mediation partners may collect and process device identifiers, IP addresses, screen size, battery level, time zone, OS specs, and ad interaction metrics.',
+                                    style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Complete Privacy Policies:',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () => launchUrl(Uri.parse('https://richardchung0907.github.io/richy-Lite/')),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.link, size: 16, color: Colors.blue.shade400),
+                                        const SizedBox(width: 6),
+                                        const Expanded(
+                                          child: Text(
+                                            'RICHY Lite Privacy Policy',
+                                            style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline, fontSize: 13),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  InkWell(
+                                    onTap: () => launchUrl(Uri.parse('https://appodeal.com/privacy-policy/')),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.link, size: 16, color: Colors.blue.shade400),
+                                        const SizedBox(width: 6),
+                                        const Expanded(
+                                          child: Text(
+                                            'Appodeal Privacy Policy',
+                                            style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline, fontSize: 13),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 44,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFE6395A),
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // Close this dialog
+                                        AdManager.showPrivacySettings(context); // Open Appodeal consent settings
+                                      },
+                                      child: const Text(
+                                        'Manage Consent & Opt-Out',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('OK'),
+                                child: const Text(
+                                  'OK',
+                                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                                ),
                               ),
                             ],
                           ),
