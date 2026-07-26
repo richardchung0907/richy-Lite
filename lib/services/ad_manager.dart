@@ -56,7 +56,7 @@ class AdManager {
       }
       
       // Step 1: Set testing mode unconditionally for safe real-device testing
-      await Appodeal.setTesting(false);
+      await Appodeal.setTesting(true);
 
       // Explicitly set COPPA child-directed treatment to false (general audience app)
       await Appodeal.setChildDirectedTreatment(false);
