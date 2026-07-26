@@ -45,15 +45,7 @@ class AdManager {
     try {
       debugPrint('Appodeal: Initializing SDK...');
 
-      // Request iOS App Tracking Transparency (ATT) authorization if on iOS
-      if (Platform.isIOS) {
-        try {
-          debugPrint('Appodeal: Requesting iOS tracking authorization...');
-          await Appodeal.requestIOSTrackingAuthorization();
-        } catch (e) {
-          debugPrint('Appodeal ATT authorization request error: $e');
-        }
-      }
+      // Note: App Tracking Transparency is handled automatically by Appodeal's Stack Consent Manager on iOS 14.5+
       
       // Step 1: Set testing mode unconditionally for safe real-device testing
       await Appodeal.setTesting(true);
@@ -239,16 +231,16 @@ class AdManager {
 
     try {
       final key = _appKey;
-      await Appodeal.ConsentForm.load(
+      Appodeal.ConsentForm.load(
         appKey: key,
-        onConsentFormLoadSuccess: (status) async {
+        onConsentFormLoadSuccess: (status) {
           // Close the loading dialog
           if (context.mounted) {
             Navigator.of(context).pop();
           }
 
           // Show the loaded consent form
-          await Appodeal.ConsentForm.show(
+          Appodeal.ConsentForm.show(
             onConsentFormDismissed: (error) {
               if (error != null) {
                 debugPrint('Appodeal: ConsentForm show error: $error');
