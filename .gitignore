@@ -61,6 +61,9 @@ expected_filters/
 !scripts/**/*.md
 
 
+*.apk
+
+
 # iOS Certificates (Sensitive local-only credentials)
 ios_distribution.key
 request.certSigningRequest
