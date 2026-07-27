@@ -133,15 +133,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () {
                         showDialog(
                           context: context,
-                          builder: (context) => AlertDialog(
+                          builder: (dialogContext) => AlertDialog(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            title: Row(
+                            title: const Row(
                               children: [
-                                Icon(Icons.security_rounded, color: const Color(0xFFE6395A)),
-                                const SizedBox(width: 8),
-                                const Text(
+                                Icon(Icons.security_rounded, color: Color(0xFFE6395A)),
+                                SizedBox(width: 8),
+                                Text(
                                   'Privacy Settings',
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
@@ -211,12 +211,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                       onPressed: () {
-                                        Navigator.of(context).pop(); // Close this dialog
-                                        AdManager.showPrivacySettings(context); // Open Appodeal consent settings
+                                        Navigator.of(dialogContext).pop(); // Close this dialog safely
+                                        AdManager.showPrivacySettings(context); // Open Appodeal consent settings using outer context
                                       },
-                                      child: const Text(
-                                        'Manage Consent & Opt-Out',
-                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      child: const FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          'Manage Consent & Opt-Out',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
                                       ),
                                     ),
                                   ),

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
 import '../widgets/custom_appodeal_banner.dart';
@@ -218,6 +217,9 @@ class AdManager {
   /// Programmatically load and display the Appodeal GDPR/CCPA Consent / Privacy Options Form.
   /// Allows users to review, change, or revoke their consent choices at any time.
   static Future<void> showPrivacySettings(BuildContext context) async {
+    // Flag to track if the loading dialog is currently showing
+    bool isDialogShowing = true;
+
     // Show loading overlay so the user knows something is happening in the background
     showDialog(
       context: context,
@@ -227,49 +229,75 @@ class AdManager {
           valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE6395A)),
         ),
       ),
-    );
+    ).then((_) {
+      isDialogShowing = false;
+    });
 
     try {
       final key = _appKey;
       Appodeal.ConsentForm.load(
         appKey: key,
-        onConsentFormLoadSuccess: (status) {
-          // Close the loading dialog
-          if (context.mounted) {
+        onConsentFormLoadSuccess: (status) async {
+          // Close the loading dialog safely
+          if (isDialogShowing && context.mounted) {
             Navigator.of(context).pop();
           }
 
-          // Show the loaded consent form
-          Appodeal.ConsentForm.show(
-            onConsentFormDismissed: (error) {
-              if (error != null) {
-                debugPrint('Appodeal: ConsentForm show error: $error');
-              } else {
-                debugPrint('Appodeal: ConsentForm shown and dismissed successfully.');
-              }
-            },
-          );
+          // Check if a privacy options form (opt-out or re-consent) is required in the user's region
+          final reqStatus = await Appodeal.ConsentForm.getPrivacyOptionsRequirementStatus();
+          debugPrint('Appodeal: ConsentStatus is $status, PrivacyOptionsRequirementStatus is $reqStatus');
+
+          if (reqStatus == PrivacyOptionsRequirementStatus.required) {
+            // Show the appropriate GDPR/CCPA privacy options form
+            Appodeal.ConsentForm.showPrivacyOptionsForm(
+              onConsentFormDismissed: (error) {
+                if (error != null) {
+                  debugPrint('Appodeal: showPrivacyOptionsForm error: $error');
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Unable to display privacy options: ${error.description}'),
+                        backgroundColor: const Color(0xFFE6395A),
+                      ),
+                    );
+                  }
+                } else {
+                  debugPrint('Appodeal: Privacy options form closed successfully.');
+                }
+              },
+            );
+          } else {
+            // If not in a regulated region (e.g., outside EU/EEA/US), let the user know instead of opening a blank/white native screen
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Privacy preferences are managed automatically for your region.'),
+                  backgroundColor: Color(0xFFE6395A),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          }
         },
         onConsentFormLoadFailure: (error) {
-          // Close the loading dialog
-          if (context.mounted) {
+          // Close the loading dialog safely
+          if (isDialogShowing && context.mounted) {
             Navigator.of(context).pop();
           }
           debugPrint('Appodeal: ConsentForm load failure: $error');
           
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Unable to load privacy preferences at this time. Please try again later.'),
-                backgroundColor: Color(0xFFE6395A),
+              SnackBar(
+                content: Text('Unable to load privacy preferences: ${error.description}'),
+                backgroundColor: const Color(0xFFE6395A),
               ),
             );
           }
         },
       );
     } catch (e) {
-      // Close loading dialog if open
-      if (context.mounted) {
+      if (isDialogShowing && context.mounted) {
         Navigator.of(context).pop();
       }
       debugPrint('Appodeal showPrivacySettings error: $e');
