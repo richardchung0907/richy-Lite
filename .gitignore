@@ -78,7 +78,7 @@ keys.txt
 
 # Agent and tool configurations
 .codewhale/
-!AGENTS.md
+AGENTS.md
 .agents/
 # Custom AI Agent Skills
 skills/
