@@ -80,4 +80,6 @@ keys.txt
 .codewhale/
 !AGENTS.md
 .agents/
+# Custom AI Agent Skills
+skills/
 
