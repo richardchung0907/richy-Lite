@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stack_appodeal_flutter/stack_appodeal_flutter.dart';
 import '../widgets/custom_appodeal_banner.dart';
@@ -46,8 +47,12 @@ class AdManager {
 
       // Note: App Tracking Transparency is handled automatically by Appodeal's Stack Consent Manager on iOS 14.5+
       
-      // Step 1: Set testing mode unconditionally for safe real-device testing
-      await Appodeal.setTesting(true);
+      // Step 1: Set testing mode only in debug mode for safe development
+      if (kDebugMode) {
+        await Appodeal.setTesting(true);
+      } else {
+        await Appodeal.setTesting(false);
+      }
 
       // Explicitly set COPPA child-directed treatment to false (general audience app)
       await Appodeal.setChildDirectedTreatment(false);
