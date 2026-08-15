@@ -1,7 +1,7 @@
 name: richy_lite
 description: RICHY Lite - A beautiful lifestyle/beauty photo filter app.
 publish_to: 'none'
-version: 1.0.1+1
+version: 1.0.2+1
 
 environment:
   sdk: ^3.11.0
