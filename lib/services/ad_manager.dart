@@ -54,6 +54,9 @@ class AdManager {
         await Appodeal.setTesting(false);
       }
 
+      // Disable AdMob entirely (account suspended, migrating to Appodeal's other networks)
+      await Appodeal.disableNetwork("admob");
+
       // Explicitly set COPPA child-directed treatment to false (general audience app)
       await Appodeal.setChildDirectedTreatment(false);
 
