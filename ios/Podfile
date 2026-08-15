@@ -31,11 +31,11 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Core Appodeal SDK and selected non-AdMob adapters
+  # Core Appodeal SDK and selected non-AdMob adapters (leaving version constraints open so CocoaPods resolves compatible versions automatically)
   pod 'Appodeal', '4.2.0'
-  pod 'AppodealAppLovinAdapter', '13.5.1.0'
-  pod 'AppodealIronSourceAdapter', '9.1.0.0'
-  pod 'AppodealUnityAdsAdapter', '4.17.0.0'
+  pod 'AppodealAppLovinAdapter'
+  pod 'AppodealIronSourceAdapter'
+  pod 'AppodealUnityAdsAdapter'
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
